@@ -144,15 +144,16 @@ export default function App() {
   };
 
   return (
-    <div dir="rtl" className="min-h-screen flex flex-col mx-auto max-w-md shadow-2xl relative overflow-hidden" style={{ backgroundColor: theme.cream, color: theme.dark, fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+    <div dir="rtl" className="min-h-screen flex flex-col mx-auto max-w-md relative bg-white shadow-2xl" style={{ backgroundColor: theme.cream, color: theme.dark, fontFamily: 'system-ui, -apple-system, sans-serif' }}>
       
       {toast && (
-          <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-[100] text-white px-5 py-2.5 rounded-full text-sm font-bold shadow-xl transition-all animate-in fade-in slide-in-from-top-4 border border-[#D4AF37]/30" style={{ backgroundColor: theme.primary }}>
+          <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-[100] text-white px-5 py-2.5 rounded-full text-sm font-bold shadow-xl transition-all animate-in fade-in slide-in-from-top-4 border border-[#D4AF37]/30" style={{ backgroundColor: theme.primary }}>
               {toast}
           </div>
       )}
 
-      <div className="flex-1 overflow-y-auto pb-20 bg-white/60">
+      {/* تم التعديل هنا: استخدام pb-24 لضمان عدم تغطية المحتوى بواسطة الشريط السفلي */}
+      <div className="flex-1 overflow-y-auto pb-24 bg-white/60 w-full h-full">
         {readingItem !== null ? (
           <ReadingScreen 
             readingItem={readingItem} 
@@ -181,8 +182,8 @@ export default function App() {
         )}
       </div>
 
-      {/* الشريط السفلي دائم الظهور */}
-      <div className="absolute bottom-0 w-full bg-white border-t flex justify-between items-center h-16 px-2 pb-1 shadow-[0_-10px_25px_rgba(6,44,30,0.1)] z-50 rounded-t-3xl border-[#D4AF37]/20">
+      {/* التعديل الجوهري: جعل الشريط السفلي fixed ليظل ثابتاً في الأسفل مع تحديد max-w-md ليتوافق مع الحاوية */}
+      <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-white border-t flex justify-between items-center h-16 px-2 pb-1 shadow-[0_-10px_25px_rgba(6,44,30,0.1)] z-50 rounded-t-3xl border-[#D4AF37]/20">
         <NavItem icon={<Home size={20} />} label="الرئيسية" isActive={activeTab === 'home' && readingItem === null} onClick={() => {setActiveTab('home'); setReadingItem(null);}} theme={theme} />
         <NavItem icon={<List size={20} />} label="الفهرس" isActive={activeTab === 'index' && readingItem === null} onClick={() => {setActiveTab('index'); setReadingItem(null);}} theme={theme} />
         <NavItem icon={<Search size={20} />} label="البحث" isActive={activeTab === 'search' && readingItem === null} onClick={() => {setActiveTab('search'); setReadingItem(null);}} theme={theme} />
@@ -218,7 +219,6 @@ function HeaderBanner({ theme, title, subtitle }) {
   );
 }
 
-// --- بقية الشاشات الأساسية (كما هي مع التأكد من نقل TargetAyah) ---
 function JuzIndexScreen({ theme, onOpenJuz }) {
   const juzs = Array.from({length: 30}, (_, i) => i + 1);
   return (
@@ -366,7 +366,6 @@ function BookmarksScreen({ theme, bookmarks, onOpenSurah, toggleBookmark }) {
   );
 }
 
-// --- شاشة القراءة (مع دعم التوجه السريع لآية محددة) ---
 function ReadingScreen({ readingItem, theme, onBack, bookmarks, toggleBookmark, currentUser, groups, showToast }) {
   const [pagesList, setPagesList] = useState([]);
   const [ayahsByPage, setAyahsByPage] = useState({});
@@ -569,10 +568,9 @@ function ReadingScreen({ readingItem, theme, onBack, bookmarks, toggleBookmark, 
   );
 }
 
-// --- نظام المجموعات والختمات (المُعاد برمجته كلياً) ---
 function GroupsTab({ theme, currentUser, setCurrentUser, users, setUsers, groups, setGroups, showToast }) {
   const [activeGroupId, setActiveGroupId] = useState(null);
-  const [groupTab, setGroupTab] = useState('khatma'); // 'khatma' | 'chat'
+  const [groupTab, setGroupTab] = useState('khatma'); 
   const [authMode, setAuthMode] = useState('login'); 
   const [emailInput, setEmailInput] = useState("");
   const [passInput, setPassInput] = useState("");
@@ -604,7 +602,6 @@ function GroupsTab({ theme, currentUser, setCurrentUser, users, setUsers, groups
     setShowJoinDialog(false); setInviteInput("");
   };
 
-  // وظائف الختمة
   const createKhatma = (groupId) => {
     setGroups(groups.map(g => {
       if (g.id === groupId) {
@@ -620,7 +617,6 @@ function GroupsTab({ theme, currentUser, setCurrentUser, users, setUsers, groups
 
   const reserveJuz = (groupId, juzId) => {
     const g = groups.find(x => x.id === groupId);
-    // منع العضو من حجز أكثر من جزء في نفس الوقت (اختياري، لكن منطقي للختمة)
     const alreadyReserved = g.activeKhatma.juzs.some(j => j.userId === currentUser.id && j.status === 'RESERVED');
     if (alreadyReserved) { showToast("أنت تقرأ جزءاً بالفعل، أتمه أولاً."); return; }
 
@@ -650,7 +646,6 @@ function GroupsTab({ theme, currentUser, setCurrentUser, users, setUsers, groups
     else showToast("تقبل الله قراءتك.");
   };
 
-  // الدردشة
   const sendChat = (groupId) => {
     if(!msgInput.trim()) return;
     setGroups(groups.map(g => g.id === groupId ? {
@@ -712,7 +707,6 @@ function GroupsTab({ theme, currentUser, setCurrentUser, users, setUsers, groups
 
         {isMember ? (
           <div className="flex-1 flex flex-col">
-            {/* Tabs */}
             <div className="flex bg-white border-b">
                <button onClick={()=>setGroupTab('khatma')} className={`flex-1 py-3 text-sm font-bold border-b-2 ${groupTab==='khatma' ? 'border-[#062c1e] text-[#062c1e]' : 'border-transparent text-gray-400'}`}>الختمة الحالية</button>
                <button onClick={()=>setGroupTab('chat')} className={`flex-1 py-3 text-sm font-bold border-b-2 ${groupTab==='chat' ? 'border-[#062c1e] text-[#062c1e]' : 'border-transparent text-gray-400'}`}>الدردشة</button>
@@ -781,7 +775,6 @@ function GroupsTab({ theme, currentUser, setCurrentUser, users, setUsers, groups
                  </div>
                )}
             </div>
-            {/* Input only for Chat Tab */}
             {groupTab === 'chat' && (
               <div className="bg-white p-3 border-t shadow-[0_-5px_10px_rgba(0,0,0,0.05)] flex gap-2">
                   <input value={msgInput} onChange={e => setMsgInput(e.target.value)} className="flex-1 p-3 bg-gray-50 rounded-full text-sm outline-none border border-gray-200" placeholder="اكتب رسالتك للمجموعة..." />
@@ -801,7 +794,6 @@ function GroupsTab({ theme, currentUser, setCurrentUser, users, setUsers, groups
     );
   }
 
-  // فرز المجموعات: مجموعاتي vs المجموعات الأخرى للمنافسة
   const myGroups = groups.filter(g => g.members.some(m => m.userId === currentUser.id) || currentUser.role === 'ADMIN');
   const otherGroups = groups.filter(g => !g.members.some(m => m.userId === currentUser.id) && currentUser.role !== 'ADMIN');
   const isManagement = currentUser.role === 'ADMIN' || currentUser.role === 'SUPERVISOR';
@@ -815,7 +807,6 @@ function GroupsTab({ theme, currentUser, setCurrentUser, users, setUsers, groups
       </div>
       
       <div className="p-5 space-y-8">
-        {/* أزرار الإجراءات */}
         <div className="flex gap-4">
           <button onClick={() => setShowJoinDialog(true)} className="flex-1 py-4 border-2 rounded-2xl text-sm font-bold transition-all shadow-sm" style={{borderColor: theme.accent, color: theme.primary}}>انضمام برمز</button>
           {isManagement && (
@@ -823,7 +814,6 @@ function GroupsTab({ theme, currentUser, setCurrentUser, users, setUsers, groups
           )}
         </div>
 
-        {/* مجموعاتي */}
         <div>
           <h2 className="font-bold text-lg mb-4 text-[#062c1e] border-b pb-2">مجموعاتي ({myGroups.length})</h2>
           {myGroups.length === 0 ? <p className="text-center text-gray-400 text-sm">لا توجد مجموعات</p> : (
@@ -848,7 +838,6 @@ function GroupsTab({ theme, currentUser, setCurrentUser, users, setUsers, groups
           )}
         </div>
 
-        {/* لوحة الشرف / مجموعات أخرى (للمنافسة) */}
         {otherGroups.length > 0 && (
           <div>
             <h2 className="font-bold text-lg mb-4 text-gray-500 border-b pb-2 flex items-center gap-2"><Trophy size={20}/> لوحة الشرف</h2>
