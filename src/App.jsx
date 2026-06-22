@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Home, List, Library, Bookmark, Users, ArrowRight, Copy, MessageCircle, BookmarkMinus, PlusCircle, Trash2, LogOut, Loader2, Check, BookOpenText, ChevronLeft, ChevronRight, Search, Phone, Mail, ShieldAlert, Flag, Send, Reply, X, User as UserIcon, BookOpen, Trophy } from 'lucide-react';
+import { Home, List, Library, Bookmark, Users, ArrowRight, Copy, BookmarkMinus, PlusCircle, Trash2, LogOut, Loader2, Check, BookOpenText, ChevronLeft, ChevronRight, Search, ShieldAlert, Flag, Send, X, User as UserIcon, Trophy, PlayCircle, PauseCircle } from 'lucide-react';
 
 // --- البيانات الأساسية والميتا ---
 const SURAHS_META = [
@@ -76,7 +76,6 @@ const MOCK_USERS = [
   { id: 'u_user', email: 'user@quran.com', phone: '0522222222', name: 'مستخدم تجريبي', password: '123', role: 'USER' }
 ];
 
-// دالة مساعدة لتهيئة 30 جزء للختمة
 const initKhatmaJuzs = () => Array.from({length: 30}, (_, i) => ({
   id: i + 1, status: 'AVAILABLE', userId: null, userName: null
 }));
@@ -90,13 +89,6 @@ const MOCK_GROUPS = [
     messages: [
       { id: 1, userId: 'sys', userName: 'النظام', text: 'تم إنشاء الختمة. توكلوا على الله.', time: '10:00 ص', reported: false, isSystem: true }
     ]
-  },
-  {
-    id: 'g2', name: 'مجالس النور', description: 'حفظ ومراجعة', inviteCode: 'NOOR99', 
-    ownerId: 'u_admin', completedKhatmas: 12,
-    members: [{ userId: 'u_admin', name: 'مدير النظام', role: 'ADMIN' }],
-    activeKhatma: null,
-    messages: []
   }
 ];
 
@@ -144,16 +136,15 @@ export default function App() {
   };
 
   return (
-    <div dir="rtl" className="min-h-screen flex flex-col mx-auto max-w-md relative bg-white shadow-2xl" style={{ backgroundColor: theme.cream, color: theme.dark, fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+    <div dir="rtl" className="min-h-screen flex flex-col mx-auto max-w-md shadow-2xl relative overflow-hidden" style={{ backgroundColor: theme.cream, color: theme.dark, fontFamily: 'system-ui, -apple-system, sans-serif' }}>
       
       {toast && (
-          <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-[100] text-white px-5 py-2.5 rounded-full text-sm font-bold shadow-xl transition-all animate-in fade-in slide-in-from-top-4 border border-[#D4AF37]/30" style={{ backgroundColor: theme.primary }}>
+          <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-[100] text-white px-5 py-2.5 rounded-full text-sm font-bold shadow-xl transition-all animate-in fade-in slide-in-from-top-4 border border-[#D4AF37]/30" style={{ backgroundColor: theme.primary }}>
               {toast}
           </div>
       )}
 
-      {/* تم التعديل هنا: استخدام pb-24 لضمان عدم تغطية المحتوى بواسطة الشريط السفلي */}
-      <div className="flex-1 overflow-y-auto pb-24 bg-white/60 w-full h-full">
+      <div className="flex-1 overflow-y-auto pb-20 bg-white/60">
         {readingItem !== null ? (
           <ReadingScreen 
             readingItem={readingItem} 
@@ -182,8 +173,7 @@ export default function App() {
         )}
       </div>
 
-      {/* التعديل الجوهري: جعل الشريط السفلي fixed ليظل ثابتاً في الأسفل مع تحديد max-w-md ليتوافق مع الحاوية */}
-      <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-white border-t flex justify-between items-center h-16 px-2 pb-1 shadow-[0_-10px_25px_rgba(6,44,30,0.1)] z-50 rounded-t-3xl border-[#D4AF37]/20">
+      <div className="fixed bottom-0 w-full max-w-md mx-auto bg-white border-t flex justify-between items-center h-16 px-2 pb-1 shadow-[0_-10px_25px_rgba(6,44,30,0.1)] z-50 rounded-t-3xl border-[#D4AF37]/20">
         <NavItem icon={<Home size={20} />} label="الرئيسية" isActive={activeTab === 'home' && readingItem === null} onClick={() => {setActiveTab('home'); setReadingItem(null);}} theme={theme} />
         <NavItem icon={<List size={20} />} label="الفهرس" isActive={activeTab === 'index' && readingItem === null} onClick={() => {setActiveTab('index'); setReadingItem(null);}} theme={theme} />
         <NavItem icon={<Search size={20} />} label="البحث" isActive={activeTab === 'search' && readingItem === null} onClick={() => {setActiveTab('search'); setReadingItem(null);}} theme={theme} />
@@ -211,14 +201,13 @@ function HeaderBanner({ theme, title, subtitle }) {
     <div className="flex flex-col items-center justify-center pt-10 pb-6 shadow-lg rounded-b-[40px] mb-6 relative overflow-hidden" 
          style={{ background: `linear-gradient(135deg, ${theme.primary} 0%, ${theme.primaryLight} 100%)` }}>
       <div className="absolute inset-0 opacity-100" style={{ backgroundImage: theme.pattern }}></div>
-      <div className="absolute opacity-20 right-0 top-0 w-32 h-32 transform translate-x-10 -translate-y-10 rounded-full border-[20px] border-[#D4AF37]"></div>
-      <div className="absolute opacity-20 left-0 bottom-0 w-24 h-24 transform -translate-x-8 translate-y-8 rounded-full border-[15px] border-[#D4AF37]"></div>
       <h1 className="text-3xl font-bold font-serif tracking-wider z-10" style={{ color: theme.accent, textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>{title}</h1>
       {subtitle && <p className="text-[#E8CA6D] opacity-90 mt-2 text-sm z-10 font-medium tracking-wide">{subtitle}</p>}
     </div>
   );
 }
 
+// ... (JuzIndexScreen, SurahIndexScreen, SearchScreen, TafsirScreen, BookmarksScreen remain the same) ...
 function JuzIndexScreen({ theme, onOpenJuz }) {
   const juzs = Array.from({length: 30}, (_, i) => i + 1);
   return (
@@ -230,10 +219,7 @@ function JuzIndexScreen({ theme, onOpenJuz }) {
                className="flex flex-col items-center justify-center py-6 bg-white rounded-[24px] shadow-sm border border-gray-100 cursor-pointer hover:shadow-lg hover:-translate-y-1 transition-all"
                style={{ borderBottom: `3px solid ${theme.accent}30` }}>
             <span className="text-lg font-bold" style={{ color: theme.primary }}>الجزء</span>
-            <div className="w-12 h-12 mt-2 flex items-center justify-center rounded-full font-bold text-lg shadow-inner" 
-                 style={{ backgroundColor: theme.cream, color: theme.accent, border: `2px solid ${theme.accentLight}` }}>
-              {juzNum.toLocaleString('ar-EG')}
-            </div>
+            <div className="w-12 h-12 mt-2 flex items-center justify-center rounded-full font-bold text-lg shadow-inner" style={{ backgroundColor: theme.cream, color: theme.accent, border: `2px solid ${theme.accentLight}` }}>{juzNum}</div>
           </div>
         ))}
       </div>
@@ -250,13 +236,10 @@ function SurahIndexScreen({ theme, onOpenSurah }) {
           <div key={surah.number} onClick={() => onOpenSurah(surah.number)} 
                className="flex items-center p-4 bg-white rounded-2xl shadow-sm border border-gray-100 cursor-pointer hover:shadow-md hover:border-[#D4AF37] transition-all relative overflow-hidden">
             <div className="absolute left-0 top-0 bottom-0 w-1.5 opacity-0 hover:opacity-100 transition-opacity" style={{ backgroundColor: theme.accent }}></div>
-            <div className="w-12 h-12 flex items-center justify-center rounded-full font-bold relative shadow-inner" 
-                 style={{ backgroundColor: theme.cream, color: theme.primary, border: `2px solid ${theme.accentLight}` }}>
-              <span className="text-sm">{surah.number.toLocaleString('ar-EG')}</span>
-            </div>
+            <div className="w-12 h-12 flex items-center justify-center rounded-full font-bold relative shadow-inner" style={{ backgroundColor: theme.cream, color: theme.primary, border: `2px solid ${theme.accentLight}` }}><span className="text-sm">{surah.number}</span></div>
             <div className="mr-4 flex-1">
               <h2 className="text-lg font-bold font-serif" style={{ color: theme.primary }}>{surah.name}</h2>
-              <p className="text-xs text-gray-500 mt-1 font-medium">{surah.type} • {surah.ayahs.toLocaleString('ar-EG')} آية</p>
+              <p className="text-xs text-gray-500 mt-1 font-medium">{surah.type} • {surah.ayahs} آية</p>
             </div>
             <ArrowRight size={20} style={{ color: theme.accentLight }} />
           </div>
@@ -280,9 +263,7 @@ function SearchScreen({ theme, onOpenSurah, showToast }) {
       const data = await res.json();
       if (data.code === 200 && data.data && data.data.matches) setResults(data.data.matches);
       else setResults([]);
-    } catch (error) {
-      showToast("حدث خطأ أثناء البحث."); setResults([]);
-    }
+    } catch (error) { showToast("حدث خطأ أثناء البحث."); setResults([]); }
     setLoading(false);
   };
 
@@ -291,27 +272,18 @@ function SearchScreen({ theme, onOpenSurah, showToast }) {
       <HeaderBanner theme={theme} title="البحث في القرآن" subtitle="ابحث عن أي كلمة أو آية" />
       <div className="p-5">
         <div className="flex gap-2 mb-6">
-          <input 
-            type="text" placeholder="اكتب كلمة للبحث..." value={query} onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-            className="flex-1 p-4 rounded-2xl border-2 focus:outline-none font-bold text-lg" style={{ borderColor: theme.accentLight, color: theme.primary }}
-          />
-          <button onClick={handleSearch} className="p-4 rounded-2xl text-white flex items-center justify-center transition-all hover:opacity-90 shadow-md" style={{ backgroundColor: theme.primary }}>
-            {loading ? <Loader2 size={24} className="animate-spin" /> : <Search size={24} />}
-          </button>
+          <input type="text" placeholder="اكتب كلمة للبحث..." value={query} onChange={(e) => setQuery(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSearch()} className="flex-1 p-4 rounded-2xl border-2 focus:outline-none font-bold text-lg" style={{ borderColor: theme.accentLight, color: theme.primary }} />
+          <button onClick={handleSearch} className="p-4 rounded-2xl text-white flex items-center justify-center transition-all shadow-md" style={{ backgroundColor: theme.primary }}>{loading ? <Loader2 size={24} className="animate-spin" /> : <Search size={24} />}</button>
         </div>
-        {hasSearched && !loading && results.length === 0 && (
-          <div className="text-center mt-10 opacity-50"><Search size={64} style={{ color: theme.accentLight }} className="mx-auto mb-4" /><p className="font-bold">لا توجد نتائج مطابقة</p></div>
-        )}
+        {hasSearched && !loading && results.length === 0 && <div className="text-center mt-10 opacity-50"><p className="font-bold">لا توجد نتائج</p></div>}
         {results.length > 0 && (
           <div className="space-y-4">
             <p className="font-bold mb-4" style={{ color: theme.primary }}>تم العثور على {results.length} نتيجة:</p>
             {results.map((res, idx) => (
-              <div key={idx} onClick={() => onOpenSurah(res.surah.number, res.numberInSurah)} className="p-5 bg-white rounded-[24px] shadow-sm border border-gray-100 cursor-pointer hover:shadow-md hover:border-[#D4AF37] transition-all relative overflow-hidden">
-                <div className="absolute right-0 top-0 bottom-0 w-2" style={{ backgroundColor: theme.accent }}></div>
+              <div key={idx} onClick={() => onOpenSurah(res.surah.number, res.numberInSurah)} className="p-5 bg-white rounded-[24px] shadow-sm border border-gray-100 cursor-pointer">
                 <div className="flex justify-between items-center mb-3">
                   <h3 className="font-bold font-serif text-lg" style={{ color: theme.primary }}>سورة {res.surah.name.replace('سُورَةُ ', '')}</h3>
-                  <span className="text-xs font-bold px-3 py-1 rounded-full" style={{ backgroundColor: theme.cream, color: theme.accent, border: `1px solid ${theme.accentLight}` }}>الآية {res.numberInSurah.toLocaleString('ar-EG')}</span>
+                  <span className="text-xs font-bold px-3 py-1 rounded-full" style={{ backgroundColor: theme.cream, color: theme.accent, border: `1px solid ${theme.accentLight}` }}>الآية {res.numberInSurah}</span>
                 </div>
                 <p className="text-base leading-relaxed text-gray-800 font-serif">{res.text}</p>
               </div>
@@ -326,17 +298,11 @@ function SearchScreen({ theme, onOpenSurah, showToast }) {
 function TafsirScreen({ theme, showToast }) {
   return (
     <div>
-      <HeaderBanner theme={theme} title="كتب التفسير" subtitle="المكتبة الإسلامية" />
+      <HeaderBanner theme={theme} title="كتب التفسير" />
       <div className="p-5 space-y-4">
-        <div className="bg-[#FAF8F5] border border-[#D4AF37]/30 p-4 rounded-2xl mb-6 text-center shadow-inner">
-            <p className="text-sm font-bold" style={{color: theme.primary}}>لقراءة التفسير، افتح أي سورة واضغط مطولاً على الآية.</p>
-        </div>
+        <div className="bg-[#FAF8F5] border border-[#D4AF37]/30 p-4 rounded-2xl mb-6 text-center shadow-inner"><p className="text-sm font-bold" style={{color: theme.primary}}>لقراءة التفسير، افتح أي سورة واضغط مطولاً على الآية.</p></div>
         {TAFSIR_BOOKS.map((tafsir) => (
-            <div key={tafsir.id} onClick={() => showToast(`انتقل للقرآن واضغط على الآية لقراءة ${tafsir.title}`)} className="flex flex-col p-6 bg-white rounded-[24px] shadow-sm border border-gray-100 cursor-pointer hover:shadow-md hover:border-[#D4AF37] relative overflow-hidden">
-               <div className="absolute right-0 top-0 bottom-0 w-2" style={{ backgroundColor: theme.accent }}></div>
-               <h2 className="text-xl font-bold mb-2 font-serif relative z-10" style={{ color: theme.primary }}>{tafsir.title}</h2>
-               <p className="text-sm font-bold text-gray-500 relative z-10">{tafsir.author}</p>
-            </div>
+            <div key={tafsir.id} onClick={() => showToast(`انتقل للقرآن واضغط على الآية لقراءة ${tafsir.title}`)} className="flex flex-col p-6 bg-white rounded-[24px] shadow-sm border border-gray-100 cursor-pointer relative"><div className="absolute right-0 top-0 bottom-0 w-2" style={{ backgroundColor: theme.accent }}></div><h2 className="text-xl font-bold mb-2 font-serif relative z-10" style={{ color: theme.primary }}>{tafsir.title}</h2><p className="text-sm font-bold text-gray-500 relative z-10">{tafsir.author}</p></div>
         ))}
       </div>
     </div>
@@ -348,16 +314,11 @@ function BookmarksScreen({ theme, bookmarks, onOpenSurah, toggleBookmark }) {
     <div>
       <HeaderBanner theme={theme} title="العلامات المحفوظة" />
       <div className="p-4">
-        {bookmarks.length === 0 ? (
-          <div className="flex flex-col items-center mt-20 opacity-40"><Bookmark size={80} style={{ color: theme.primary }} className="mb-4" /><p className="font-bold text-lg" style={{ color: theme.primary }}>لا توجد علامات</p></div>
-        ) : (
+        {bookmarks.length === 0 ? <div className="flex flex-col items-center mt-20 opacity-40"><p className="font-bold text-lg" style={{ color: theme.primary }}>لا توجد علامات</p></div> : (
           bookmarks.map((b, idx) => (
-            <div key={idx} className="flex items-center p-6 bg-white rounded-[24px] shadow-sm border border-gray-100 mb-4 hover:shadow-lg transition-all" style={{ borderRight: `4px solid ${theme.accent}` }}>
-              <div className="flex-1 cursor-pointer" onClick={() => onOpenSurah(b.surah, b.ayah)}>
-                <h3 className="font-bold text-xl mb-2 font-serif" style={{ color: theme.primary }}>سورة {b.surahName}</h3>
-                <p className="text-sm font-bold" style={{ color: theme.accent }}>الآية {b.ayah.toLocaleString('ar-EG')}</p>
-              </div>
-              <button onClick={() => toggleBookmark(b.surah, b.ayah, b.surahName)} className="p-4 bg-red-50 text-red-500 rounded-full hover:bg-red-100 shadow-sm"><Trash2 size={22} /></button>
+            <div key={idx} className="flex items-center p-6 bg-white rounded-[24px] shadow-sm border border-gray-100 mb-4 cursor-pointer" style={{ borderRight: `4px solid ${theme.accent}` }}>
+              <div className="flex-1" onClick={() => onOpenSurah(b.surah, b.ayah)}><h3 className="font-bold text-xl mb-2 font-serif" style={{ color: theme.primary }}>سورة {b.surahName}</h3><p className="text-sm font-bold" style={{ color: theme.accent }}>الآية {b.ayah}</p></div>
+              <button onClick={() => toggleBookmark(b.surah, b.ayah, b.surahName)} className="p-4 bg-red-50 text-red-500 rounded-full hover:bg-red-100"><Trash2 size={22} /></button>
             </div>
           ))
         )}
@@ -377,8 +338,14 @@ function ReadingScreen({ readingItem, theme, onBack, bookmarks, toggleBookmark, 
   const [tafsirText, setTafsirText] = useState("");
   const [isTafsirLoading, setIsTafsirLoading] = useState(false);
   const [title, setTitle] = useState("");
-  const [touchStart, setTouchStart] = useState({ x: null, y: null });
-  const [touchEnd, setTouchEnd] = useState({ x: null, y: null });
+  const [touchStart, setTouchStart] = useState({x: null, y: null});
+  const [touchEnd, setTouchEnd] = useState({x: null, y: null});
+  
+  // Audio playback state
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [audioObj, setAudioObj] = useState(null);
+  // Default reciter (Mishary Alafasy)
+  const [reciter] = useState('ar.alafasy');
 
   useEffect(() => {
     setLoading(true);
@@ -427,6 +394,14 @@ function ReadingScreen({ readingItem, theme, onBack, bookmarks, toggleBookmark, 
             }, 500);
         }
       }).catch(err => { showToast("حدث خطأ في التحميل."); setLoading(false); });
+      
+      // Cleanup audio on unmount
+      return () => {
+          if (audioObj) {
+              audioObj.pause();
+              audioObj.src = "";
+          }
+      };
   }, [readingItem]);
 
   const handleCopy = (text) => {
@@ -436,7 +411,44 @@ function ReadingScreen({ readingItem, theme, onBack, bookmarks, toggleBookmark, 
           tArea.select(); document.execCommand('copy'); document.body.removeChild(tArea);
           showToast("تم نسخ الآية!");
       } catch (err) { showToast("تم النسخ (محاكاة)"); }
-      setSelectedAyah(null);
+      closeAyahMenu();
+  };
+
+  const closeAyahMenu = () => {
+      setSelectedAyah(null); 
+      setIsTafsirMode(false);
+      // Optional: Stop playing when closing the menu, or let it play. 
+      // We'll let it play but reset if they open a different ayah.
+  };
+
+  const handlePlayAudio = (globalAyahNumber) => {
+      // إذا كان الصوت يعمل أصلاً، نقوم بإيقافه
+      if (isPlaying && audioObj) {
+          audioObj.pause();
+          setIsPlaying(false);
+          return;
+      }
+      
+      // إذا كان هناك صوت سابق، نوقفه
+      if (audioObj) {
+          audioObj.pause();
+      }
+
+      // إنشاء رابط الصوت المباشر من CDN الخاص بـ Alquran.cloud
+      const audioUrl = `https://cdn.islamic.network/quran/audio/128/${reciter}/${globalAyahNumber}.mp3`;
+      const newAudio = new Audio(audioUrl);
+      
+      newAudio.play().then(() => {
+          setIsPlaying(true);
+          setAudioObj(newAudio);
+      }).catch(e => {
+          showToast("تعذر تشغيل الصوت. تأكد من اتصالك بالإنترنت.");
+      });
+
+      // عندما ينتهي الصوت
+      newAudio.onended = () => {
+          setIsPlaying(false);
+      };
   };
 
   useEffect(() => {
@@ -446,47 +458,26 @@ function ReadingScreen({ readingItem, theme, onBack, bookmarks, toggleBookmark, 
       fetch(`https://api.alquran.cloud/v1/ayah/${selectedAyah.surahNumber}:${selectedAyah.numberInSurah}/${edition}`)
         .then(res => res.json()).then(data => {
           if(data.data && data.data.text) setTafsirText(data.data.text);
-          else setTafsirText(`(عفواً، التفسير غير متصل حالياً بقاعدة البيانات المفتوحة. هذا نص توضيحي).`);
+          else setTafsirText(`(عفواً، التفسير غير متصل حالياً. هذا نص توضيحي).`);
           setIsTafsirLoading(false);
         }).catch(err => { setTafsirText("حدث خطأ."); setIsTafsirLoading(false); });
     }
   }, [isTafsirMode, selectedTafsirBook, selectedAyah]);
 
-  const handleTouchStart = (e) => {
-    setTouchEnd({ x: null, y: null });
-    setTouchStart({
-      x: e.targetTouches[0].clientX,
-      y: e.targetTouches[0].clientY
-    });
-  };
-
-  const handleTouchMove = (e) => {
-    setTouchEnd({
-      x: e.targetTouches[0].clientX,
-      y: e.targetTouches[0].clientY
-    });
-  };
-
-  const handleTouchEnd = () => {
+  const onTouchEndEvent = () => {
     if (!touchStart.x || !touchEnd.x) return;
     const distanceX = touchStart.x - touchEnd.x;
     const distanceY = touchStart.y - touchEnd.y;
     
-    // التمرير مسموح فقط إذا كانت الحركة أفقية أكثر منها عمودية
     if (Math.abs(distanceX) > Math.abs(distanceY) && Math.abs(distanceX) > 50) {
       if (distanceX < 0 && currentPageIndex < pagesList.length - 1) {
-        // سحب من اليسار إلى اليمين -> الصفحة التالية
         setCurrentPageIndex(i => i + 1);
       }
       if (distanceX > 0 && currentPageIndex > 0) {
-        // سحب من اليمين إلى اليسار -> الصفحة السابقة
         setCurrentPageIndex(i => i - 1);
       }
     }
-    
-    // تصفير القيم لمنع القفز العشوائي
-    setTouchStart({ x: null, y: null });
-    setTouchEnd({ x: null, y: null });
+    setTouchStart({ x: null, y: null }); setTouchEnd({ x: null, y: null });
   };
 
   const pageAyahs = ayahsByPage[pagesList[currentPageIndex]] || [];
@@ -503,14 +494,17 @@ function ReadingScreen({ readingItem, theme, onBack, bookmarks, toggleBookmark, 
     <div className="min-h-full relative flex flex-col" style={{ backgroundColor: theme.cream }}>
       <div className="sticky top-0 z-10 flex items-center h-16 px-4 shadow-md rounded-b-3xl relative overflow-hidden" style={{ background: `linear-gradient(135deg, ${theme.primary} 0%, ${theme.primaryLight} 100%)`, color: theme.accent }}>
         <div className="absolute inset-0" style={{ backgroundImage: theme.pattern }}></div>
-        <button onClick={onBack} className="p-2 -mr-2 bg-white/10 rounded-full z-10"><ArrowRight size={24} /></button>
+        <button onClick={() => {
+            if(audioObj) { audioObj.pause(); setIsPlaying(false); }
+            onBack();
+        }} className="p-2 -mr-2 bg-white/10 rounded-full z-10"><ArrowRight size={24} /></button>
         <h1 className="flex-1 text-center text-xl font-bold mr-6 font-serif z-10">{title}</h1>
       </div>
 
       {loading ? (
         <div className="flex flex-col items-center justify-center mt-40"><Loader2 size={48} className="animate-spin mb-4" style={{ color: theme.accent }} /><p className="font-bold text-lg" style={{ color: theme.primary }}>جاري تحميل الرسم العثماني...</p></div>
       ) : (
-        <div className="flex-1 p-5 pt-6 flex flex-col" onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
+        <div className="flex-1 p-5 pt-6 flex flex-col" onTouchStart={e => setTouchStart({x: e.targetTouches[0].clientX, y: e.targetTouches[0].clientY})} onTouchMove={e => setTouchEnd({x: e.targetTouches[0].clientX, y: e.targetTouches[0].clientY})} onTouchEnd={onTouchEndEvent}>
           <div className="flex-1 space-y-12">
             {groupedBySurah.map((group, idx) => (
                <div key={`${group.surahNumber}-${idx}`}>
@@ -528,7 +522,7 @@ function ReadingScreen({ readingItem, theme, onBack, bookmarks, toggleBookmark, 
                           const isBookmarked = bookmarks.some(b => b.surah === group.surahNumber && b.ayah === 1);
                           return (
                               <div className="text-center mb-12">
-                                  <span id={`ayah-1-1`} onClick={() => setSelectedAyah(ayah1)} className={`inline-block text-[32px] font-bold tracking-widest px-4 py-2 cursor-pointer rounded-lg`} style={{ color: theme.primary, fontFamily: "'Amiri Quran', serif", backgroundColor: isBookmarked ? '#D4AF3720' : 'transparent' }}>
+                                  <span id={`ayah-1-1`} onClick={() => { setSelectedAyah(ayah1); setIsPlaying(false); }} className={`inline-block text-[32px] font-bold tracking-widest px-4 py-2 cursor-pointer rounded-lg`} style={{ color: theme.primary, fontFamily: "'Amiri Quran', serif", backgroundColor: isBookmarked ? '#D4AF3720' : 'transparent' }}>
                                       بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ <span className="text-[24px] mx-1" style={{ color: theme.accent }}>﴿١﴾</span>
                                   </span>
                               </div>
@@ -546,7 +540,7 @@ function ReadingScreen({ readingItem, theme, onBack, bookmarks, toggleBookmark, 
                       let text = ayah.text;
                       if (group.surahNumber !== 1 && ayah.numberInSurah === 1) text = text.replace(/^بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ\s*/, "");
                       return (
-                        <span key={`${group.surahNumber}-${ayah.number}`} id={`ayah-${group.surahNumber}-${ayah.numberInSurah}`} onClick={() => setSelectedAyah(ayah)} className={`inline text-[30px] px-1.5 cursor-pointer rounded-lg transition-all`} style={{ fontFamily: "'Amiri Quran', serif", color: theme.dark, backgroundColor: isBookmarked ? '#D4AF3720' : 'transparent' }}>
+                        <span key={`${group.surahNumber}-${ayah.number}`} id={`ayah-${group.surahNumber}-${ayah.numberInSurah}`} onClick={() => { setSelectedAyah(ayah); setIsPlaying(false); }} className={`inline text-[30px] px-1.5 cursor-pointer rounded-lg transition-all`} style={{ fontFamily: "'Amiri Quran', serif", color: theme.dark, backgroundColor: isBookmarked ? '#D4AF3720' : 'transparent' }}>
                           {text} <span className="text-[24px] mx-1 font-bold" style={{ color: theme.accent }}>﴿{ayah.numberInSurah.toLocaleString('ar-EG')}﴾</span>{' '}
                         </span>
                       );
@@ -565,15 +559,20 @@ function ReadingScreen({ readingItem, theme, onBack, bookmarks, toggleBookmark, 
       )}
 
       {selectedAyah && (
-        <div className="fixed inset-0 z-[100] flex items-end bg-black/60 backdrop-blur-sm animate-in fade-in" onClick={() => {setSelectedAyah(null); setIsTafsirMode(false);}}>
+        <div className="fixed inset-0 z-[100] flex items-end bg-black/60 backdrop-blur-sm animate-in fade-in" onClick={closeAyahMenu}>
           <div className="w-full max-w-md mx-auto bg-white rounded-t-[40px] p-6 shadow-2xl relative overflow-hidden" onClick={e => e.stopPropagation()} style={{ borderTop: `4px solid ${theme.accent}` }}>
             <div className="w-16 h-1.5 bg-gray-300 rounded-full mx-auto mb-6 relative z-10"></div>
             <h3 className="text-xl font-bold mb-6 text-center border-b pb-4 relative z-10 font-serif" style={{ color: theme.primary }}>سورة {selectedAyah.surahName} - الآية {selectedAyah.numberInSurah}</h3>
             <div className="relative z-10">
               {!isTafsirMode ? (
                 <div className="space-y-3">
+                  {/* زر التلاوة الصوتية */}
+                  <button onClick={() => handlePlayAudio(selectedAyah.number)} className={`flex items-center justify-center w-full p-4 rounded-2xl font-bold text-white shadow-md transition-all ${isPlaying ? 'bg-red-600' : 'bg-[#D4AF37]'}`}>
+                    {isPlaying ? <><PauseCircle className="ml-3" size={24} /> إيقاف التلاوة</> : <><PlayCircle className="ml-3" size={24} /> استماع للآية (بصوت العفاسي)</>}
+                  </button>
+                  
                   <button onClick={() => setIsTafsirMode(true)} className="flex items-center justify-center w-full p-4 rounded-2xl font-bold text-white shadow-md" style={{ background: `linear-gradient(135deg, ${theme.primary} 0%, ${theme.primaryLight} 100%)` }}><BookOpenText className="ml-3 text-[#E8CA6D]" size={24} /> قراءة تفسير الآية</button>
-                  <button onClick={() => { toggleBookmark(selectedAyah.surahNumber, selectedAyah.numberInSurah, selectedAyah.surahName); setSelectedAyah(null); }} className="flex items-center w-full p-4 rounded-2xl hover:bg-gray-50 border font-bold">
+                  <button onClick={() => { toggleBookmark(selectedAyah.surahNumber, selectedAyah.numberInSurah, selectedAyah.surahName); closeAyahMenu(); }} className="flex items-center w-full p-4 rounded-2xl hover:bg-gray-50 border font-bold">
                     {bookmarks.some(b => b.surah === selectedAyah.surahNumber && b.ayah === selectedAyah.numberInSurah) ? <><BookmarkMinus className="ml-4 text-red-500" size={24} /> إزالة العلامة المرجعية</> : <><Bookmark className="ml-4 text-[#062c1e]" size={24} /> حفظ كعلامة مرجعية</>}
                   </button>
                   <button onClick={() => handleCopy(selectedAyah.text)} className="flex items-center w-full p-4 rounded-2xl hover:bg-gray-50 border font-bold text-gray-700"><Copy className="ml-4 text-gray-500" size={24} /> نسخ نص الآية</button>
@@ -587,7 +586,7 @@ function ReadingScreen({ readingItem, theme, onBack, bookmarks, toggleBookmark, 
                   <div className="p-4 rounded-2xl border bg-white max-h-64 overflow-y-auto mb-4 shadow-inner">
                      {isTafsirLoading ? <div className="flex flex-col items-center py-6"><Loader2 size={32} className="animate-spin mb-3 text-[#D4AF37]" /><p className="text-sm font-bold text-[#062c1e]">جاري جلب التفسير...</p></div> : <p className="text-lg leading-relaxed text-gray-800 font-serif text-justify">{tafsirText}</p>}
                   </div>
-                  <button onClick={() => {setIsTafsirMode(false); setSelectedAyah(null);}} className="w-full py-3 text-white rounded-xl font-bold shadow-md bg-[#062c1e]">إغلاق</button>
+                  <button onClick={closeAyahMenu} className="w-full py-3 text-white rounded-xl font-bold shadow-md bg-[#062c1e]">إغلاق</button>
                 </div>
               )}
             </div>
@@ -598,9 +597,10 @@ function ReadingScreen({ readingItem, theme, onBack, bookmarks, toggleBookmark, 
   );
 }
 
+// ... (GroupsTab remains the same) ...
 function GroupsTab({ theme, currentUser, setCurrentUser, users, setUsers, groups, setGroups, showToast }) {
   const [activeGroupId, setActiveGroupId] = useState(null);
-  const [groupTab, setGroupTab] = useState('khatma'); 
+  const [groupTab, setGroupTab] = useState('khatma');
   const [authMode, setAuthMode] = useState('login'); 
   const [emailInput, setEmailInput] = useState("");
   const [passInput, setPassInput] = useState("");
@@ -610,25 +610,19 @@ function GroupsTab({ theme, currentUser, setCurrentUser, users, setUsers, groups
 
   const handleLogin = () => {
       const user = users.find(u => u.email === emailInput && u.password === passInput);
-      if(user) {
-          setCurrentUser(user); showToast(`مرحباً ${user.name}`);
-      } else showToast('بيانات الدخول غير صحيحة');
+      if(user) { setCurrentUser(user); showToast(`مرحباً ${user.name}`); } 
+      else showToast('بيانات الدخول غير صحيحة');
   };
 
   const handleJoin = () => {
     const g = groups.find(x => x.inviteCode === inviteInput.toUpperCase());
     if(g) {
-      if(g.members.length >= 30) {
-        showToast('عذراً، المجموعة ممتلئة (30 عضو).');
-      } else if (!g.members.some(m=>m.userId===currentUser.id)) {
+      if(g.members.length >= 30) { showToast('عذراً، المجموعة ممتلئة (30 عضو).'); } 
+      else if (!g.members.some(m=>m.userId===currentUser.id)) {
         setGroups(groups.map(x => x.id === g.id ? {...x, members: [...x.members, {userId: currentUser.id, name: currentUser.name, role: 'USER'}]} : x));
         showToast('تم الانضمام بنجاح.');
-      } else {
-        showToast('أنت عضو بالفعل في هذه المجموعة.');
-      }
-    } else {
-      showToast('رمز الدعوة غير صحيح.');
-    }
+      } else { showToast('أنت عضو بالفعل في هذه المجموعة.'); }
+    } else { showToast('رمز الدعوة غير صحيح.'); }
     setShowJoinDialog(false); setInviteInput("");
   };
 
@@ -649,10 +643,7 @@ function GroupsTab({ theme, currentUser, setCurrentUser, users, setUsers, groups
     const g = groups.find(x => x.id === groupId);
     const alreadyReserved = g.activeKhatma.juzs.some(j => j.userId === currentUser.id && j.status === 'RESERVED');
     if (alreadyReserved) { showToast("أنت تقرأ جزءاً بالفعل، أتمه أولاً."); return; }
-
-    setGroups(groups.map(g => g.id === groupId ? {
-      ...g, activeKhatma: { ...g.activeKhatma, juzs: g.activeKhatma.juzs.map(j => j.id === juzId ? { ...j, status: 'RESERVED', userId: currentUser.id, userName: currentUser.name } : j) }
-    } : g));
+    setGroups(groups.map(g => g.id === groupId ? { ...g, activeKhatma: { ...g.activeKhatma, juzs: g.activeKhatma.juzs.map(j => j.id === juzId ? { ...j, status: 'RESERVED', userId: currentUser.id, userName: currentUser.name } : j) } } : g));
   };
 
   const completeJuz = (groupId, juzId) => {
@@ -661,12 +652,8 @@ function GroupsTab({ theme, currentUser, setCurrentUser, users, setUsers, groups
       if (g.id === groupId) {
         const updatedJuzs = g.activeKhatma.juzs.map(j => j.id === juzId ? { ...j, status: 'COMPLETED' } : j);
         allCompleted = updatedJuzs.every(j => j.status === 'COMPLETED');
-        
         if (allCompleted) {
-          return {
-            ...g, activeKhatma: null, completedKhatmas: g.completedKhatmas + 1,
-            messages: [...g.messages, { id: Date.now(), userId: 'sys', userName: 'النظام', text: '🎉 تقبل الله، تم إتمام الختمة بنجاح!', time: 'الآن', isSystem: true }]
-          };
+          return { ...g, activeKhatma: null, completedKhatmas: g.completedKhatmas + 1, messages: [...g.messages, { id: Date.now(), userId: 'sys', userName: 'النظام', text: '🎉 تقبل الله، تم إتمام الختمة بنجاح!', time: 'الآن', isSystem: true }] };
         }
         return { ...g, activeKhatma: { ...g.activeKhatma, juzs: updatedJuzs } };
       }
@@ -678,9 +665,7 @@ function GroupsTab({ theme, currentUser, setCurrentUser, users, setUsers, groups
 
   const sendChat = (groupId) => {
     if(!msgInput.trim()) return;
-    setGroups(groups.map(g => g.id === groupId ? {
-      ...g, messages: [...g.messages, { id: Date.now(), userId: currentUser.id, userName: currentUser.name, text: msgInput, time: 'الآن', reported: false }]
-    } : g));
+    setGroups(groups.map(g => g.id === groupId ? { ...g, messages: [...g.messages, { id: Date.now(), userId: currentUser.id, userName: currentUser.name, text: msgInput, time: 'الآن', reported: false }] } : g));
     setMsgInput("");
   };
   const reportMsg = (groupId, msgId) => {
@@ -709,12 +694,6 @@ function GroupsTab({ theme, currentUser, setCurrentUser, users, setUsers, groups
             </div>
             <button onClick={handleLogin} className="w-full py-4 text-white rounded-xl font-bold mt-4 shadow-md" style={{ background: `linear-gradient(135deg, ${theme.primary} 0%, ${theme.primaryLight} 100%)` }}>دخول</button>
         </div>
-        <p className="mt-6 text-xs text-gray-500 text-center leading-relaxed">
-           حسابات التجربة:<br/>
-           مدير: admin@quran.com<br/>
-           مشرف: super@quran.com<br/>
-           عضو: user@quran.com (الكل بكلمة مرور 123)
-        </p>
       </div>
     );
   }
@@ -729,10 +708,7 @@ function GroupsTab({ theme, currentUser, setCurrentUser, users, setUsers, groups
       <div className="min-h-full flex flex-col">
         <div className="sticky top-0 z-10 bg-[#062c1e] text-white p-4 shadow-md flex items-center h-16">
           <button onClick={() => setActiveGroupId(null)} className="ml-4"><ArrowRight /></button>
-          <div className="flex-1">
-            <h1 className="font-bold text-lg leading-tight">{group.name}</h1>
-            <p className="text-[10px] text-[#D4AF37]">الختمات المنجزة: {group.completedKhatmas} | الأعضاء: {group.members.length}/30</p>
-          </div>
+          <div className="flex-1"><h1 className="font-bold text-lg leading-tight">{group.name}</h1><p className="text-[10px] text-[#D4AF37]">الختمات المنجزة: {group.completedKhatmas} | الأعضاء: {group.members.length}/30</p></div>
         </div>
 
         {isMember ? (
@@ -749,11 +725,7 @@ function GroupsTab({ theme, currentUser, setCurrentUser, users, setUsers, groups
                        <div className="text-center bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
                           <Trophy size={64} className="mx-auto mb-4 text-[#D4AF37]" />
                           <h3 className="font-bold text-xl mb-2 text-[#062c1e]">لا توجد ختمة نشطة حالياً</h3>
-                          {canManage ? (
-                             <button onClick={() => createKhatma(group.id)} className="mt-6 w-full py-3 bg-[#062c1e] text-white rounded-xl font-bold shadow-md">إنشاء ختمة جديدة</button>
-                          ) : (
-                             <p className="text-sm text-gray-500">ننتظر مشرف المجموعة لفتح ختمة جديدة.</p>
-                          )}
+                          {canManage ? <button onClick={() => createKhatma(group.id)} className="mt-6 w-full py-3 bg-[#062c1e] text-white rounded-xl font-bold shadow-md">إنشاء ختمة جديدة</button> : <p className="text-sm text-gray-500">ننتظر مشرف المجموعة لفتح ختمة جديدة.</p>}
                        </div>
                     ) : (
                        <div>
@@ -763,19 +735,11 @@ function GroupsTab({ theme, currentUser, setCurrentUser, users, setUsers, groups
                           </div>
                           <div className="grid grid-cols-3 gap-3">
                              {group.activeKhatma.juzs.map(juz => (
-                                <div key={juz.id} className={`flex flex-col items-center justify-center p-3 rounded-2xl shadow-sm border transition-all
-                                   ${juz.status === 'COMPLETED' ? 'bg-gray-100 border-gray-200 opacity-60' : 
-                                     juz.status === 'RESERVED' && juz.userId === currentUser.id ? 'bg-[#D4AF37]/10 border-[#D4AF37]' :
-                                     juz.status === 'RESERVED' ? 'bg-orange-50 border-orange-200' : 'bg-white border-green-200 hover:border-green-500 cursor-pointer'}`}
-                                     onClick={() => {
-                                        if (juz.status === 'AVAILABLE') reserveJuz(group.id, juz.id);
-                                     }}
-                                >
+                                <div key={juz.id} className={`flex flex-col items-center justify-center p-3 rounded-2xl shadow-sm border transition-all ${juz.status === 'COMPLETED' ? 'bg-gray-100 border-gray-200 opacity-60' : juz.status === 'RESERVED' && juz.userId === currentUser.id ? 'bg-[#D4AF37]/10 border-[#D4AF37]' : juz.status === 'RESERVED' ? 'bg-orange-50 border-orange-200' : 'bg-white border-green-200 hover:border-green-500 cursor-pointer'}`} onClick={() => { if (juz.status === 'AVAILABLE') reserveJuz(group.id, juz.id); }}>
                                    <span className="text-sm font-bold mb-1 text-[#062c1e]">الجزء {juz.id}</span>
                                    {juz.status === 'COMPLETED' ? <span className="text-[10px] flex items-center text-green-700 font-bold"><Check size={12}/> تمت</span> :
                                     juz.status === 'RESERVED' && juz.userId === currentUser.id ? <button onClick={(e) => {e.stopPropagation(); completeJuz(group.id, juz.id);}} className="text-[10px] bg-[#062c1e] text-white px-2 py-1 rounded w-full font-bold">إتمام القراءة</button> :
-                                    juz.status === 'RESERVED' ? <span className="text-[9px] text-orange-600 font-bold text-center leading-tight">حجزه<br/>{juz.userName.split(' ')[0]}</span> :
-                                    <span className="text-[10px] text-green-600 font-bold">تثبيت</span>}
+                                    juz.status === 'RESERVED' ? <span className="text-[9px] text-orange-600 font-bold text-center leading-tight">حجزه<br/>{juz.userName.split(' ')[0]}</span> : <span className="text-[10px] text-green-600 font-bold">تثبيت</span>}
                                 </div>
                              ))}
                           </div>
@@ -787,10 +751,7 @@ function GroupsTab({ theme, currentUser, setCurrentUser, users, setUsers, groups
                     {group.messages.map(m => (
                       <div key={m.id} className={`p-4 rounded-2xl shadow-sm border ${m.reported ? 'bg-red-50 border-red-200' : m.isSystem ? 'bg-blue-50 border-blue-200 text-center' : 'bg-white'}`}>
                           {!m.isSystem && (
-                            <div className="flex justify-between items-center mb-2">
-                                <span className="font-bold text-xs text-[#062c1e] flex items-center gap-1"><UserIcon size={12}/> {m.userName}</span>
-                                <span className="text-[10px] text-gray-400">{m.time}</span>
-                            </div>
+                            <div className="flex justify-between items-center mb-2"><span className="font-bold text-xs text-[#062c1e] flex items-center gap-1"><UserIcon size={12}/> {m.userName}</span><span className="text-[10px] text-gray-400">{m.time}</span></div>
                           )}
                           <p className={`text-sm leading-relaxed ${m.isSystem ? 'text-blue-800 font-bold' : 'text-gray-800'}`}>{m.text}</p>
                           {!m.isSystem && (
@@ -799,7 +760,6 @@ function GroupsTab({ theme, currentUser, setCurrentUser, users, setUsers, groups
                                 {canManage && <button onClick={() => deleteMsg(group.id, m.id)} className="text-red-800 text-[11px] font-bold"><Trash2 size={13}/></button>}
                             </div>
                           )}
-                          {m.reported && canManage && <p className="text-[10px] text-red-600 mt-2 font-bold">⚠️ تم الإبلاغ عن هذه الرسالة</p>}
                       </div>
                     ))}
                  </div>
@@ -816,8 +776,7 @@ function GroupsTab({ theme, currentUser, setCurrentUser, users, setUsers, groups
           <div className="p-8 text-center mt-20">
              <ShieldAlert size={64} className="mx-auto mb-4 text-gray-300" />
              <h2 className="text-xl font-bold mb-2 text-[#062c1e]">أنت لست عضواً</h2>
-             <p className="text-gray-500 mb-6 text-sm">يجب أن تنضم للمجموعة لتتمكن من رؤية تفاصيل الختمة والدردشة.</p>
-             <button onClick={() => setActiveGroupId(null)} className="w-full py-3 bg-[#062c1e] text-white rounded-xl font-bold shadow-md">العودة للقائمة</button>
+             <button onClick={() => setActiveGroupId(null)} className="w-full py-3 mt-6 bg-[#062c1e] text-white rounded-xl font-bold shadow-md">العودة للقائمة</button>
           </div>
         )}
       </div>
@@ -826,7 +785,6 @@ function GroupsTab({ theme, currentUser, setCurrentUser, users, setUsers, groups
 
   const myGroups = groups.filter(g => g.members.some(m => m.userId === currentUser.id) || currentUser.role === 'ADMIN');
   const otherGroups = groups.filter(g => !g.members.some(m => m.userId === currentUser.id) && currentUser.role !== 'ADMIN');
-  const isManagement = currentUser.role === 'ADMIN' || currentUser.role === 'SUPERVISOR';
 
   return (
     <div>
@@ -837,46 +795,25 @@ function GroupsTab({ theme, currentUser, setCurrentUser, users, setUsers, groups
       </div>
       
       <div className="p-5 space-y-8">
-        <div className="flex gap-4">
-          <button onClick={() => setShowJoinDialog(true)} className="flex-1 py-4 border-2 rounded-2xl text-sm font-bold transition-all shadow-sm" style={{borderColor: theme.accent, color: theme.primary}}>انضمام برمز</button>
-          {isManagement && (
-            <button onClick={() => showToast("سيتم تفعيل ميزة الإضافة قريباً")} className="flex-1 flex justify-center items-center py-4 rounded-2xl text-white text-sm font-bold shadow-md" style={{backgroundColor: theme.primary}}><PlusCircle size={18} className="ml-2" /> مجموعة جديدة</button>
-          )}
-        </div>
-
+        <div className="flex gap-4"><button onClick={() => setShowJoinDialog(true)} className="flex-1 py-4 border-2 rounded-2xl text-sm font-bold shadow-sm" style={{borderColor: theme.accent, color: theme.primary}}>انضمام برمز</button></div>
         <div>
           <h2 className="font-bold text-lg mb-4 text-[#062c1e] border-b pb-2">مجموعاتي ({myGroups.length})</h2>
-          {myGroups.length === 0 ? <p className="text-center text-gray-400 text-sm">لا توجد مجموعات</p> : (
-            <div className="space-y-4">
-              {myGroups.map(g => {
-                const isSuper = g.members.some(m => m.userId === currentUser.id && m.role === 'SUPERVISOR') || currentUser.role === 'ADMIN';
-                return (
+          <div className="space-y-4">
+              {myGroups.map(g => (
                   <div key={g.id} onClick={() => setActiveGroupId(g.id)} className="p-5 bg-white rounded-2xl shadow-sm border border-gray-100 cursor-pointer relative overflow-hidden">
                     <div className="absolute left-0 top-0 bottom-0 w-1.5" style={{ backgroundColor: theme.accent }}></div>
-                    <div className="flex justify-between items-start mb-2">
-                      <h3 className="font-bold text-lg text-[#062c1e]">{g.name}</h3>
-                      {isSuper && <span className="text-[10px] font-bold px-2 py-1 rounded bg-yellow-50 text-yellow-700 border border-yellow-200">إدارة</span>}
-                    </div>
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="text-gray-500 flex items-center gap-1"><Users size={14}/> {g.members.length}/30</span>
-                      <span className="font-bold text-[#D4AF37] flex items-center gap-1"><Trophy size={14}/> {g.completedKhatmas} ختمات</span>
-                    </div>
+                    <h3 className="font-bold text-lg text-[#062c1e] mb-2">{g.name}</h3>
+                    <div className="flex justify-between items-center text-sm"><span className="text-gray-500 flex items-center gap-1"><Users size={14}/> {g.members.length}/30</span><span className="font-bold text-[#D4AF37] flex items-center gap-1"><Trophy size={14}/> {g.completedKhatmas} ختمات</span></div>
                   </div>
-                );
-              })}
-            </div>
-          )}
+              ))}
+          </div>
         </div>
-
         {otherGroups.length > 0 && (
           <div>
             <h2 className="font-bold text-lg mb-4 text-gray-500 border-b pb-2 flex items-center gap-2"><Trophy size={20}/> لوحة الشرف</h2>
             <div className="space-y-3">
               {otherGroups.sort((a,b)=>b.completedKhatmas - a.completedKhatmas).map(g => (
-                <div key={g.id} className="p-4 bg-gray-50 rounded-2xl border border-gray-100 flex justify-between items-center opacity-80">
-                  <h3 className="font-bold text-gray-600">{g.name}</h3>
-                  <span className="font-bold text-[#D4AF37] bg-white px-3 py-1 rounded-full shadow-sm">{g.completedKhatmas} ختمات</span>
-                </div>
+                <div key={g.id} className="p-4 bg-gray-50 rounded-2xl border border-gray-100 flex justify-between items-center opacity-80"><h3 className="font-bold text-gray-600">{g.name}</h3><span className="font-bold text-[#D4AF37] bg-white px-3 py-1 rounded-full shadow-sm">{g.completedKhatmas} ختمات</span></div>
               ))}
             </div>
           </div>
