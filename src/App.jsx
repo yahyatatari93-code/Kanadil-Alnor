@@ -377,8 +377,8 @@ function ReadingScreen({ readingItem, theme, onBack, bookmarks, toggleBookmark, 
   const [tafsirText, setTafsirText] = useState("");
   const [isTafsirLoading, setIsTafsirLoading] = useState(false);
   const [title, setTitle] = useState("");
-  const [touchStart, setTouchStart] = useState(null);
-  const [touchEnd, setTouchEnd] = useState(null);
+  const [touchStart, setTouchStart] = useState({ x: null, y: null });
+  const [touchEnd, setTouchEnd] = useState({ x: null, y: null });
 
   useEffect(() => {
     setLoading(true);
@@ -452,11 +452,39 @@ function ReadingScreen({ readingItem, theme, onBack, bookmarks, toggleBookmark, 
     }
   }, [isTafsirMode, selectedTafsirBook, selectedAyah]);
 
-  const onTouchEndEvent = () => {
-    if (!touchStart || !touchEnd) return;
-    const distance = touchStart - touchEnd;
-    if (distance > 50 && currentPageIndex < pagesList.length - 1) setCurrentPageIndex(i => i + 1);
-    if (distance < -50 && currentPageIndex > 0) setCurrentPageIndex(i => i - 1);
+  const handleTouchStart = (e) => {
+    setTouchEnd({ x: null, y: null });
+    setTouchStart({
+      x: e.targetTouches[0].clientX,
+      y: e.targetTouches[0].clientY
+    });
+  };
+
+  const handleTouchMove = (e) => {
+    setTouchEnd({
+      x: e.targetTouches[0].clientX,
+      y: e.targetTouches[0].clientY
+    });
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStart.x || !touchEnd.x) return;
+    const distanceX = touchStart.x - touchEnd.x;
+    const distanceY = touchStart.y - touchEnd.y;
+    
+    // التمرير مسموح فقط إذا كانت الحركة أفقية أكثر منها عمودية
+    if (Math.abs(distanceX) > Math.abs(distanceY) && Math.abs(distanceX) > 50) {
+      if (distanceX > 0 && currentPageIndex < pagesList.length - 1) {
+        setCurrentPageIndex(i => i + 1);
+      }
+      if (distanceX < 0 && currentPageIndex > 0) {
+        setCurrentPageIndex(i => i - 1);
+      }
+    }
+    
+    // تصفير القيم لمنع القفز العشوائي
+    setTouchStart({ x: null, y: null });
+    setTouchEnd({ x: null, y: null });
   };
 
   const pageAyahs = ayahsByPage[pagesList[currentPageIndex]] || [];
@@ -480,7 +508,7 @@ function ReadingScreen({ readingItem, theme, onBack, bookmarks, toggleBookmark, 
       {loading ? (
         <div className="flex flex-col items-center justify-center mt-40"><Loader2 size={48} className="animate-spin mb-4" style={{ color: theme.accent }} /><p className="font-bold text-lg" style={{ color: theme.primary }}>جاري تحميل الرسم العثماني...</p></div>
       ) : (
-        <div className="flex-1 p-5 pt-6 flex flex-col" onTouchStart={e => setTouchStart(e.targetTouches[0].clientX)} onTouchMove={e => setTouchEnd(e.targetTouches[0].clientX)} onTouchEnd={onTouchEndEvent}>
+        <div className="flex-1 p-5 pt-6 flex flex-col" onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
           <div className="flex-1 space-y-12">
             {groupedBySurah.map((group, idx) => (
                <div key={`${group.surahNumber}-${idx}`}>
