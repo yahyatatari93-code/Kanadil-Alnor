@@ -474,10 +474,12 @@ function ReadingScreen({ readingItem, theme, onBack, bookmarks, toggleBookmark, 
     
     // التمرير مسموح فقط إذا كانت الحركة أفقية أكثر منها عمودية
     if (Math.abs(distanceX) > Math.abs(distanceY) && Math.abs(distanceX) > 50) {
-      if (distanceX > 0 && currentPageIndex < pagesList.length - 1) {
+      if (distanceX < 0 && currentPageIndex < pagesList.length - 1) {
+        // سحب من اليسار إلى اليمين -> الصفحة التالية
         setCurrentPageIndex(i => i + 1);
       }
-      if (distanceX < 0 && currentPageIndex > 0) {
+      if (distanceX > 0 && currentPageIndex > 0) {
+        // سحب من اليمين إلى اليسار -> الصفحة السابقة
         setCurrentPageIndex(i => i - 1);
       }
     }
