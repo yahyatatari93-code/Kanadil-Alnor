@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Home, List, Library, Bookmark, Users, ArrowRight, Copy, BookmarkMinus, PlusCircle, Trash2, LogOut, Loader2, Check, BookOpenText, ChevronLeft, ChevronRight, Search, ShieldAlert, Flag, Send, X, User as UserIcon, Trophy, PlayCircle, PauseCircle, StopCircle } from 'lucide-react';
+import { Home, List, Library, Bookmark, Users, ArrowRight, Copy, BookmarkMinus, PlusCircle, Trash2, LogOut, Loader2, Check, BookOpenText, ChevronLeft, ChevronRight, Search, ShieldAlert, Flag, Send, Reply, X, User as UserIcon, BookOpen, Trophy, PlayCircle, PauseCircle, StopCircle, MapPin, BarChart3 } from 'lucide-react';
 
 // --- البيانات الأساسية والميتا ---
 const SURAHS_META = [
@@ -70,9 +70,12 @@ const TAFSIR_BOOKS = [
 ];
 
 const MOCK_USERS = [
-  { id: 'u_admin', email: 'admin@quran.com', phone: '0500000000', name: 'مدير النظام', password: '123', role: 'ADMIN' },
-  { id: 'u_super', email: 'super@quran.com', phone: '0511111111', name: 'أحمد المشرف', password: '123', role: 'SUPERVISOR' },
-  { id: 'u_user', email: 'user@quran.com', phone: '0522222222', name: 'مستخدم تجريبي', password: '123', role: 'USER' }
+  { id: 'u_admin', email: 'admin@quran.com', name: 'مدير النظام', password: '123', role: 'ADMIN', location: 'سوريا' },
+  { id: 'u_super', email: 'super@quran.com', name: 'أحمد المشرف', password: '123', role: 'SUPERVISOR', location: 'السعودية' },
+  { id: 'u_user', email: 'user@quran.com', name: 'مستخدم تجريبي', password: '123', role: 'USER', location: 'مصر' },
+  { id: 'u_test1', email: 't1@quran.com', name: 'عمر المسلم', password: '123', role: 'USER', location: 'سوريا' },
+  { id: 'u_test2', email: 't2@quran.com', name: 'علي الدمشقي', password: '123', role: 'USER', location: 'سوريا' },
+  { id: 'u_test3', email: 't3@quran.com', name: 'حسن الإماراتي', password: '123', role: 'USER', location: 'الإمارات' }
 ];
 
 const initKhatmaJuzs = () => Array.from({length: 30}, (_, i) => ({
@@ -190,7 +193,6 @@ function HeaderBanner({ theme, title, subtitle }) {
   );
 }
 
-// --- Screens: Juz, Surah, Search, Tafsir, Bookmarks ---
 function JuzIndexScreen({ theme, onOpenJuz }) {
   const juzs = Array.from({length: 30}, (_, i) => i + 1);
   return (
@@ -294,7 +296,12 @@ function BookmarksScreen({ theme, bookmarks, onOpenSurah, toggleBookmark }) {
   );
 }
 
-// --- شاشة القراءة والتلاوة المستمرة ---
+const RECITERS = [
+    { id: 'ar.alafasy', name: 'مشاري العفاسي' },
+    { id: 'ar.mahermuaiqly', name: 'ماهر المعيقلي' },
+    { id: 'ar.abdulbasitmurattal', name: 'عبد الباسط عبد الصمد' }
+];
+
 function ReadingScreen({ readingItem, theme, onBack, bookmarks, toggleBookmark, showToast }) {
   const [pagesList, setPagesList] = useState([]);
   const [ayahsByPage, setAyahsByPage] = useState({});
@@ -313,13 +320,13 @@ function ReadingScreen({ readingItem, theme, onBack, bookmarks, toggleBookmark, 
   const [touchStart, setTouchStart] = useState({x: null, y: null});
   const [touchEnd, setTouchEnd] = useState({x: null, y: null});
   
-  // Continuous Audio Player State
+  // Audio Player State
+  const [reciter, setReciter] = useState(RECITERS[0].id);
   const [playback, setPlayback] = useState({
       isActive: false, currentGlobalAyah: null, endGlobalAyah: null, isPaused: false
   });
   const audioRef = useRef(null);
   if (!audioRef.current) audioRef.current = new Audio();
-  const [reciter] = useState('ar.alafasy');
 
   useEffect(() => {
     setLoading(true);
@@ -367,20 +374,16 @@ function ReadingScreen({ readingItem, theme, onBack, bookmarks, toggleBookmark, 
       return () => { if(audioRef.current) { audioRef.current.pause(); audioRef.current.src = ""; } };
   }, [readingItem]);
 
-  // حساب الرقم العالمي المرجعي للآيات لسورة معينة
   const getSurahGlobalRange = (surahNumber) => {
       let start = 1;
-      for (let i = 0; i < surahNumber - 1; i++) {
-          start += SURAHS_META[i].ayahs;
-      }
+      for (let i = 0; i < surahNumber - 1; i++) { start += SURAHS_META[i].ayahs; }
       let end = start + SURAHS_META[surahNumber - 1].ayahs - 1;
       return { start, end };
   };
 
-  // التحكم بالتلاوة
   const startPlayback = (startGlobal, endGlobal) => {
       setPlayback({ isActive: true, currentGlobalAyah: startGlobal, endGlobalAyah: endGlobal, isPaused: false });
-      setSelectedAyah(null); // إغلاق النافذة
+      setSelectedAyah(null);
   };
 
   const stopPlayback = () => {
@@ -388,12 +391,10 @@ function ReadingScreen({ readingItem, theme, onBack, bookmarks, toggleBookmark, 
       if(audioRef.current) audioRef.current.pause();
   };
 
-  // مشغل الصوت التلقائي وتتبع التلاوة
   useEffect(() => {
       if (!playback.isActive || !playback.currentGlobalAyah) return;
       const audio = audioRef.current;
 
-      // التأكد من قلب الصفحة آلياً إذا كانت الآية المقروءة في صفحة أخرى
       if (Object.keys(ayahsByPage).length > 0) {
           for (const [pageNum, ayahs] of Object.entries(ayahsByPage)) {
               if (ayahs.some(a => a.number === playback.currentGlobalAyah)) {
@@ -402,7 +403,6 @@ function ReadingScreen({ readingItem, theme, onBack, bookmarks, toggleBookmark, 
                   break;
               }
           }
-          // التمرير الآلي للآية
           setTimeout(() => {
              const elements = document.querySelectorAll(`[data-global="${playback.currentGlobalAyah}"]`);
              if (elements.length > 0) elements[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -412,16 +412,12 @@ function ReadingScreen({ readingItem, theme, onBack, bookmarks, toggleBookmark, 
       audio.src = `https://cdn.islamic.network/quran/audio/128/${reciter}/${playback.currentGlobalAyah}.mp3`;
       if (!playback.isPaused) {
           audio.play().catch(e => { showToast("تعذر تشغيل الصوت."); setPlayback(p => ({...p, isPaused: true})); });
-      } else {
-          audio.pause();
-      }
+      } else { audio.pause(); }
 
       const handleEnded = () => {
           if (playback.currentGlobalAyah < playback.endGlobalAyah) {
               setPlayback(prev => ({ ...prev, currentGlobalAyah: prev.currentGlobalAyah + 1 }));
-          } else {
-              stopPlayback(); showToast("صدق الله العظيم.");
-          }
+          } else { stopPlayback(); showToast("صدق الله العظيم."); }
       };
 
       audio.addEventListener('ended', handleEnded);
@@ -458,8 +454,8 @@ function ReadingScreen({ readingItem, theme, onBack, bookmarks, toggleBookmark, 
     const distanceY = touchStart.y - touchEnd.y;
     
     if (Math.abs(distanceX) > Math.abs(distanceY) && Math.abs(distanceX) > 50) {
-      if (distanceX < 0 && currentPageIndex < pagesList.length - 1) setCurrentPageIndex(i => i + 1); // سحب يمين
-      if (distanceX > 0 && currentPageIndex > 0) setCurrentPageIndex(i => i - 1); // سحب يسار
+      if (distanceX < 0 && currentPageIndex < pagesList.length - 1) setCurrentPageIndex(i => i + 1); 
+      if (distanceX > 0 && currentPageIndex > 0) setCurrentPageIndex(i => i - 1); 
     }
     setTouchStart({ x: null, y: null }); setTouchEnd({ x: null, y: null });
   };
@@ -553,7 +549,7 @@ function ReadingScreen({ readingItem, theme, onBack, bookmarks, toggleBookmark, 
                  </div>
                  <div>
                     <p className="text-sm font-bold text-[#E8CA6D]">التلاوة مستمرة</p>
-                    <p className="text-xs opacity-80 font-bold">بصوت العفاسي</p>
+                    <p className="text-xs opacity-80 font-bold">بصوت {RECITERS.find(r => r.id === reciter)?.name}</p>
                  </div>
              </div>
              <div className="flex gap-4">
@@ -573,13 +569,19 @@ function ReadingScreen({ readingItem, theme, onBack, bookmarks, toggleBookmark, 
             <div className="relative z-10">
               {!isTafsirMode ? (
                 <div className="space-y-3">
+                  <div className="bg-gray-50 p-3 rounded-2xl border flex items-center justify-between mb-4">
+                     <label className="text-sm font-bold text-[#062c1e]">القارئ:</label>
+                     <select value={reciter} onChange={e => setReciter(e.target.value)} className="bg-transparent font-bold text-[#D4AF37] outline-none text-left" dir="ltr">
+                         {RECITERS.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+                     </select>
+                  </div>
                   <button onClick={() => startPlayback(selectedAyah.number, selectedAyah.number)} className="flex items-center justify-center w-full p-4 rounded-2xl font-bold text-white shadow-md transition-all bg-[#062c1e] hover:bg-[#0d4a35]">
                     <PlayCircle className="ml-3 text-[#D4AF37]" size={24} /> استماع لهذه الآية فقط
                   </button>
                   <button onClick={() => {
                       const range = getSurahGlobalRange(selectedAyah.surahNumber);
                       startPlayback(selectedAyah.number, range.end);
-                  }} className="flex items-center justify-center w-full p-4 rounded-2xl font-bold text-white shadow-md transition-all bg-[#D4AF37] hover:bg-[#E8CA6D]">
+                  }} className="flex items-center justify-center w-full p-4 rounded-2xl font-bold text-[#062c1e] shadow-md transition-all bg-[#D4AF37] hover:bg-[#E8CA6D]">
                     <Library className="ml-3 text-[#062c1e]" size={24} /> استماع من هنا لآخر السورة
                   </button>
                   <button onClick={() => setIsTafsirMode(true)} className="flex items-center justify-center w-full p-4 rounded-2xl font-bold text-[#062c1e] bg-gray-50 border hover:bg-gray-100"><BookOpenText className="ml-3 text-[#D4AF37]" size={24} /> قراءة تفسير الآية</button>
@@ -602,38 +604,53 @@ function ReadingScreen({ readingItem, theme, onBack, bookmarks, toggleBookmark, 
   );
 }
 
-// ... (GroupsTab remains exactly the same as previously defined) ...
+const LOCATIONS_LIST = ['سوريا', 'السعودية', 'مصر', 'الإمارات', 'الأردن', 'المغرب', 'الجزائر', 'فلسطين', 'أخرى'];
+
 function GroupsTab({ theme, currentUser, setCurrentUser, users, setUsers, groups, setGroups, showToast }) {
   const [activeGroupId, setActiveGroupId] = useState(null);
-  const [groupTab, setGroupTab] = useState('khatma'); // 'khatma' | 'chat'
-  const [authMode, setAuthMode] = useState('login'); 
+  const [groupTab, setGroupTab] = useState('khatma'); 
+  const [authMode, setAuthMode] = useState('login'); // 'login' or 'register'
+  const [adminTab, setAdminTab] = useState('groups'); // 'groups' or 'stats'
+  
+  // Login fields
   const [emailInput, setEmailInput] = useState("");
   const [passInput, setPassInput] = useState("");
+  
+  // Register fields
+  const [regData, setRegData] = useState({ name: '', email: '', password: '', location: 'سوريا' });
+
   const [msgInput, setMsgInput] = useState("");
   const [showJoinDialog, setShowJoinDialog] = useState(false);
   const [inviteInput, setInviteInput] = useState("");
 
   const handleLogin = () => {
       const user = users.find(u => u.email === emailInput && u.password === passInput);
-      if(user) {
-          setCurrentUser(user); showToast(`مرحباً ${user.name}`);
-      } else showToast('بيانات الدخول غير صحيحة');
+      if(user) { setCurrentUser(user); showToast(`مرحباً ${user.name}`); } 
+      else showToast('بيانات الدخول غير صحيحة');
+  };
+
+  const handleRegister = () => {
+      if(!regData.name || !regData.email || !regData.password) {
+          showToast("يرجى تعبئة جميع الحقول"); return;
+      }
+      if(users.some(u => u.email === regData.email)) {
+          showToast("البريد الإلكتروني مسجل مسبقاً"); return;
+      }
+      const newUser = { id: `u_${Date.now()}`, ...regData, role: 'USER' };
+      setUsers([...users, newUser]);
+      setCurrentUser(newUser);
+      showToast("تم إنشاء الحساب بنجاح!");
   };
 
   const handleJoin = () => {
     const g = groups.find(x => x.inviteCode === inviteInput.toUpperCase());
     if(g) {
-      if(g.members.length >= 30) {
-        showToast('عذراً، المجموعة ممتلئة (30 عضو).');
-      } else if (!g.members.some(m=>m.userId===currentUser.id)) {
+      if(g.members.length >= 30) { showToast('عذراً، المجموعة ممتلئة (30 عضو).'); } 
+      else if (!g.members.some(m=>m.userId===currentUser.id)) {
         setGroups(groups.map(x => x.id === g.id ? {...x, members: [...x.members, {userId: currentUser.id, name: currentUser.name, role: 'USER'}]} : x));
         showToast('تم الانضمام بنجاح.');
-      } else {
-        showToast('أنت عضو بالفعل في هذه المجموعة.');
-      }
-    } else {
-      showToast('رمز الدعوة غير صحيح.');
-    }
+      } else { showToast('أنت عضو بالفعل في هذه المجموعة.'); }
+    } else { showToast('رمز الدعوة غير صحيح.'); }
     setShowJoinDialog(false); setInviteInput("");
   };
 
@@ -702,24 +719,54 @@ function GroupsTab({ theme, currentUser, setCurrentUser, users, setUsers, groups
         <div className="w-24 h-24 rounded-full flex items-center justify-center mb-6 shadow-xl border-4 relative overflow-hidden" style={{ backgroundColor: theme.primary, borderColor: theme.accent }}>
           <div className="absolute inset-0 opacity-20" style={{ backgroundImage: theme.pattern }}></div><ShieldAlert size={48} style={{color: theme.accent}} className="relative z-10" />
         </div>
-        <h2 className="text-2xl font-bold mb-3 font-serif" style={{color: theme.primary}}>تسجيل الدخول للمجموعات</h2>
+        <h2 className="text-2xl font-bold mb-6 font-serif" style={{color: theme.primary}}>مجتمع القرآن الكريم</h2>
+        
         <div className="w-full text-right bg-white p-6 rounded-[32px] shadow-lg border border-gray-100">
-            <div className="mb-4">
-              <label className="text-sm font-bold mb-2 block" style={{ color: theme.primary }}>البريد الإلكتروني (جرب: admin@quran.com)</label>
-              <input type="email" value={emailInput} onChange={e=>setEmailInput(e.target.value)} className="w-full p-3 rounded-xl bg-gray-50 border focus:border-[#D4AF37]" dir="ltr" />
+            {/* Toggle Login / Register */}
+            <div className="flex bg-gray-100 rounded-xl p-1 mb-6">
+                <button onClick={() => setAuthMode('login')} className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${authMode === 'login' ? 'bg-white shadow text-[#062c1e]' : 'text-gray-500'}`}>تسجيل الدخول</button>
+                <button onClick={() => setAuthMode('register')} className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${authMode === 'register' ? 'bg-white shadow text-[#062c1e]' : 'text-gray-500'}`}>حساب جديد</button>
             </div>
-            <div className="mb-4">
-              <label className="text-sm font-bold mb-2 block" style={{ color: theme.primary }}>كلمة المرور (جرب: 123)</label>
-              <input type="password" value={passInput} onChange={e=>setPassInput(e.target.value)} className="w-full p-3 rounded-xl bg-gray-50 border focus:border-[#D4AF37]" dir="ltr" />
-            </div>
-            <button onClick={handleLogin} className="w-full py-4 text-white rounded-xl font-bold mt-4 shadow-md" style={{ background: `linear-gradient(135deg, ${theme.primary} 0%, ${theme.primaryLight} 100%)` }}>دخول</button>
+
+            {authMode === 'login' ? (
+                <div className="animate-in fade-in slide-in-from-left-4">
+                    <div className="mb-4">
+                      <label className="text-sm font-bold mb-2 block" style={{ color: theme.primary }}>البريد الإلكتروني (جرب: admin@quran.com)</label>
+                      <input type="email" value={emailInput} onChange={e=>setEmailInput(e.target.value)} className="w-full p-3 rounded-xl bg-gray-50 border focus:border-[#D4AF37] outline-none" dir="ltr" />
+                    </div>
+                    <div className="mb-4">
+                      <label className="text-sm font-bold mb-2 block" style={{ color: theme.primary }}>كلمة المرور (جرب: 123)</label>
+                      <input type="password" value={passInput} onChange={e=>setPassInput(e.target.value)} className="w-full p-3 rounded-xl bg-gray-50 border focus:border-[#D4AF37] outline-none" dir="ltr" />
+                    </div>
+                    <button onClick={handleLogin} className="w-full py-4 text-white rounded-xl font-bold mt-4 shadow-md" style={{ background: `linear-gradient(135deg, ${theme.primary} 0%, ${theme.primaryLight} 100%)` }}>دخول</button>
+                </div>
+            ) : (
+                <div className="animate-in fade-in slide-in-from-right-4">
+                    <div className="mb-4">
+                      <label className="text-sm font-bold mb-2 block" style={{ color: theme.primary }}>الاسم الكريم</label>
+                      <input type="text" value={regData.name} onChange={e=>setRegData({...regData, name: e.target.value})} className="w-full p-3 rounded-xl bg-gray-50 border focus:border-[#D4AF37] outline-none" />
+                    </div>
+                    <div className="mb-4">
+                      <label className="text-sm font-bold mb-2 block" style={{ color: theme.primary }}>البريد الإلكتروني</label>
+                      <input type="email" value={regData.email} onChange={e=>setRegData({...regData, email: e.target.value})} className="w-full p-3 rounded-xl bg-gray-50 border focus:border-[#D4AF37] outline-none" dir="ltr" />
+                    </div>
+                    <div className="mb-4">
+                      <label className="text-sm font-bold mb-2 block" style={{ color: theme.primary }}>كلمة المرور</label>
+                      <input type="password" value={regData.password} onChange={e=>setRegData({...regData, password: e.target.value})} className="w-full p-3 rounded-xl bg-gray-50 border focus:border-[#D4AF37] outline-none" dir="ltr" />
+                    </div>
+                    <div className="mb-4">
+                      <label className="text-sm font-bold mb-2 block" style={{ color: theme.primary }}>مكان التواجد (البلد)</label>
+                      <div className="relative">
+                          <MapPin size={18} className="absolute right-3 top-3.5 text-gray-400" />
+                          <select value={regData.location} onChange={e=>setRegData({...regData, location: e.target.value})} className="w-full p-3 pr-10 rounded-xl bg-gray-50 border focus:border-[#D4AF37] outline-none font-bold text-[#062c1e]">
+                              {LOCATIONS_LIST.map(loc => <option key={loc} value={loc}>{loc}</option>)}
+                          </select>
+                      </div>
+                    </div>
+                    <button onClick={handleRegister} className="w-full py-4 text-[#062c1e] bg-[#D4AF37] rounded-xl font-bold mt-4 shadow-md hover:bg-[#E8CA6D] transition-colors">إنشاء الحساب</button>
+                </div>
+            )}
         </div>
-        <p className="mt-6 text-xs text-gray-500 text-center leading-relaxed">
-           حسابات التجربة:<br/>
-           مدير: admin@quran.com<br/>
-           مشرف: super@quran.com<br/>
-           عضو: user@quran.com
-        </p>
       </div>
     );
   }
@@ -830,59 +877,108 @@ function GroupsTab({ theme, currentUser, setCurrentUser, users, setUsers, groups
   const myGroups = groups.filter(g => g.members.some(m => m.userId === currentUser.id) || currentUser.role === 'ADMIN');
   const otherGroups = groups.filter(g => !g.members.some(m => m.userId === currentUser.id) && currentUser.role !== 'ADMIN');
   const isManagement = currentUser.role === 'ADMIN' || currentUser.role === 'SUPERVISOR';
+  
+  // دالة لحساب وتجهيز الإحصائيات للإدارة
+  const getAdminStats = () => {
+      const stats = users.reduce((acc, u) => {
+          acc[u.location] = (acc[u.location] || 0) + 1;
+          return acc;
+      }, {});
+      return Object.entries(stats).sort((a, b) => b[1] - a[1]);
+  };
 
   return (
     <div className="pb-16">
       <div className="flex items-center justify-between h-20 px-5 shadow-md rounded-b-[32px] mb-6 relative overflow-hidden" style={{ background: `linear-gradient(135deg, ${theme.primary} 0%, ${theme.primaryLight} 100%)`, color: theme.accent }}>
         <div className="absolute inset-0" style={{ backgroundImage: theme.pattern }}></div>
-        <h1 className="text-2xl font-bold font-serif z-10">المجموعات والختمات</h1>
+        <h1 className="text-2xl font-bold font-serif z-10">{adminTab === 'stats' ? 'لوحة الإدارة' : 'المجموعات والختمات'}</h1>
         <button onClick={() => setCurrentUser(null)} className="p-2.5 bg-white/10 rounded-full z-10"><LogOut size={22} /></button>
       </div>
       
-      <div className="p-5 space-y-8">
-        <div className="flex gap-4">
-          <button onClick={() => setShowJoinDialog(true)} className="flex-1 py-4 border-2 rounded-2xl text-sm font-bold transition-all shadow-sm" style={{borderColor: theme.accent, color: theme.primary}}>انضمام برمز</button>
-          {isManagement && (
-            <button onClick={() => showToast("سيتم تفعيل ميزة الإضافة قريباً")} className="flex-1 flex justify-center items-center py-4 rounded-2xl text-white text-sm font-bold shadow-md" style={{backgroundColor: theme.primary}}><PlusCircle size={18} className="ml-2" /> مجموعة جديدة</button>
-          )}
-        </div>
+      <div className="p-5">
+        {/* شريط تبديل للمدير فقط */}
+        {currentUser.role === 'ADMIN' && (
+           <div className="flex bg-gray-100 rounded-xl p-1 mb-6 shadow-inner border border-gray-200">
+               <button onClick={() => setAdminTab('groups')} className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all flex items-center justify-center gap-2 ${adminTab === 'groups' ? 'bg-white shadow text-[#062c1e]' : 'text-gray-500'}`}><Users size={16}/> المجموعات</button>
+               <button onClick={() => setAdminTab('stats')} className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all flex items-center justify-center gap-2 ${adminTab === 'stats' ? 'bg-[#062c1e] text-[#D4AF37] shadow-md' : 'text-gray-500'}`}><BarChart3 size={16}/> الإحصائيات</button>
+           </div>
+        )}
 
-        <div>
-          <h2 className="font-bold text-lg mb-4 text-[#062c1e] border-b pb-2">مجموعاتي ({myGroups.length})</h2>
-          {myGroups.length === 0 ? <p className="text-center text-gray-400 text-sm">لا توجد مجموعات</p> : (
-            <div className="space-y-4">
-              {myGroups.map(g => {
-                const isSuper = g.members.some(m => m.userId === currentUser.id && m.role === 'SUPERVISOR') || currentUser.role === 'ADMIN';
-                return (
-                  <div key={g.id} onClick={() => setActiveGroupId(g.id)} className="p-5 bg-white rounded-2xl shadow-sm border border-gray-100 cursor-pointer relative overflow-hidden">
-                    <div className="absolute left-0 top-0 bottom-0 w-1.5" style={{ backgroundColor: theme.accent }}></div>
-                    <div className="flex justify-between items-start mb-2">
-                      <h3 className="font-bold text-lg text-[#062c1e]">{g.name}</h3>
-                      {isSuper && <span className="text-[10px] font-bold px-2 py-1 rounded bg-yellow-50 text-yellow-700 border border-yellow-200">إدارة</span>}
+        {adminTab === 'stats' && currentUser.role === 'ADMIN' ? (
+            <div className="animate-in fade-in slide-in-from-right-4">
+                <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+                    <div className="flex items-center justify-between mb-6 pb-4 border-b">
+                        <h2 className="font-bold text-lg text-[#062c1e] flex items-center gap-2"><MapPin size={20} className="text-[#D4AF37]"/> توزع المستخدمين جغرافياً</h2>
+                        <span className="text-xs bg-[#062c1e]/10 text-[#062c1e] px-3 py-1.5 rounded-full font-bold">إجمالي: {users.length}</span>
                     </div>
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="text-gray-500 flex items-center gap-1"><Users size={14}/> {g.members.length}/30</span>
-                      <span className="font-bold text-[#D4AF37] flex items-center gap-1"><Trophy size={14}/> {g.completedKhatmas} ختمات</span>
+                    
+                    <div className="space-y-5">
+                        {getAdminStats().map(([loc, count], index) => {
+                            const percentage = Math.round((count / users.length) * 100);
+                            return (
+                                <div key={loc} className="relative">
+                                    <div className="flex justify-between mb-2 text-sm font-bold">
+                                        <span className="text-gray-700">{loc}</span>
+                                        <span className="text-[#062c1e]">{percentage}% <span className="text-xs text-gray-400">({count})</span></span>
+                                    </div>
+                                    <div className="w-full bg-gray-100 rounded-full h-3">
+                                        <div className="bg-[#D4AF37] h-3 rounded-full transition-all duration-1000 ease-out relative overflow-hidden" style={{ width: `${percentage}%` }}>
+                                            <div className="absolute inset-0 bg-white/20 w-full animate-[shimmer_2s_infinite]"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )
+                        })}
+                    </div>
+                </div>
+            </div>
+        ) : (
+            <div className="space-y-8 animate-in fade-in">
+                <div className="flex gap-4">
+                  <button onClick={() => setShowJoinDialog(true)} className="flex-1 py-4 border-2 rounded-2xl text-sm font-bold transition-all shadow-sm" style={{borderColor: theme.accent, color: theme.primary}}>انضمام برمز</button>
+                  {isManagement && (
+                    <button onClick={() => showToast("سيتم تفعيل ميزة الإضافة قريباً")} className="flex-1 flex justify-center items-center py-4 rounded-2xl text-white text-sm font-bold shadow-md" style={{backgroundColor: theme.primary}}><PlusCircle size={18} className="ml-2" /> مجموعة جديدة</button>
+                  )}
+                </div>
+
+                <div>
+                  <h2 className="font-bold text-lg mb-4 text-[#062c1e] border-b pb-2">مجموعاتي ({myGroups.length})</h2>
+                  {myGroups.length === 0 ? <p className="text-center text-gray-400 text-sm">لا توجد مجموعات</p> : (
+                    <div className="space-y-4">
+                      {myGroups.map(g => {
+                        const isSuper = g.members.some(m => m.userId === currentUser.id && m.role === 'SUPERVISOR') || currentUser.role === 'ADMIN';
+                        return (
+                          <div key={g.id} onClick={() => setActiveGroupId(g.id)} className="p-5 bg-white rounded-2xl shadow-sm border border-gray-100 cursor-pointer relative overflow-hidden">
+                            <div className="absolute left-0 top-0 bottom-0 w-1.5" style={{ backgroundColor: theme.accent }}></div>
+                            <div className="flex justify-between items-start mb-2">
+                              <h3 className="font-bold text-lg text-[#062c1e]">{g.name}</h3>
+                              {isSuper && <span className="text-[10px] font-bold px-2 py-1 rounded bg-yellow-50 text-yellow-700 border border-yellow-200">إدارة</span>}
+                            </div>
+                            <div className="flex justify-between items-center text-sm">
+                              <span className="text-gray-500 flex items-center gap-1"><Users size={14}/> {g.members.length}/30</span>
+                              <span className="font-bold text-[#D4AF37] flex items-center gap-1"><Trophy size={14}/> {g.completedKhatmas} ختمات</span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {otherGroups.length > 0 && (
+                  <div>
+                    <h2 className="font-bold text-lg mb-4 text-gray-500 border-b pb-2 flex items-center gap-2"><Trophy size={20}/> لوحة الشرف</h2>
+                    <div className="space-y-3">
+                      {otherGroups.sort((a,b)=>b.completedKhatmas - a.completedKhatmas).map(g => (
+                        <div key={g.id} className="p-4 bg-gray-50 rounded-2xl border border-gray-100 flex justify-between items-center opacity-80">
+                          <h3 className="font-bold text-gray-600">{g.name}</h3>
+                          <span className="font-bold text-[#D4AF37] bg-white px-3 py-1 rounded-full shadow-sm">{g.completedKhatmas} ختمات</span>
+                        </div>
+                      ))}
                     </div>
                   </div>
-                );
-              })}
+                )}
             </div>
-          )}
-        </div>
-
-        {otherGroups.length > 0 && (
-          <div>
-            <h2 className="font-bold text-lg mb-4 text-gray-500 border-b pb-2 flex items-center gap-2"><Trophy size={20}/> لوحة الشرف</h2>
-            <div className="space-y-3">
-              {otherGroups.sort((a,b)=>b.completedKhatmas - a.completedKhatmas).map(g => (
-                <div key={g.id} className="p-4 bg-gray-50 rounded-2xl border border-gray-100 flex justify-between items-center opacity-80">
-                  <h3 className="font-bold text-gray-600">{g.name}</h3>
-                  <span className="font-bold text-[#D4AF37] bg-white px-3 py-1 rounded-full shadow-sm">{g.completedKhatmas} ختمات</span>
-                </div>
-              ))}
-            </div>
-          </div>
         )}
       </div>
 
@@ -898,6 +994,13 @@ function GroupsTab({ theme, currentUser, setCurrentUser, users, setUsers, groups
               </div>
           </div>
       )}
+      
+      {/* CSS Animation للرسم البياني */}
+      <style dangerouslySetInnerHTML={{__html: `
+        @keyframes shimmer {
+          100% { transform: translateX(100%); }
+        }
+      `}} />
     </div>
   );
 }
