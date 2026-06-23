@@ -653,6 +653,7 @@ function GroupsTab({ theme, currentUser, setCurrentUser, users, setUsers, groups
   const [authMode, setAuthMode] = useState('login'); // 'login' or 'register'
   const [adminTab, setAdminTab] = useState('groups'); // 'groups' or 'stats'
   const [selectedLocation, setSelectedLocation] = useState(null); // لعرض مستخدمي دولة معينة
+  const mapContainerRef = useRef(null); // للتحكم بوضع الخريطة التلقائي
   
   // Login fields
   const [emailInput, setEmailInput] = useState("");
@@ -754,6 +755,21 @@ function GroupsTab({ theme, currentUser, setCurrentUser, users, setUsers, groups
   const deleteMsg = (groupId, msgId) => {
     setGroups(groups.map(g => g.id === groupId ? {...g, messages: g.messages.filter(m => m.id !== msgId)} : g));
   };
+
+  // وظيفة لتوجيه الخريطة لتركيا كوضع افتراضي
+  useEffect(() => {
+    if (adminTab === 'stats' && currentUser?.role === 'ADMIN' && mapContainerRef.current) {
+      setTimeout(() => {
+        if (mapContainerRef.current) {
+          // حساب نقطة المنتصف ليظهر دبوس تركيا في الشاشة
+          const mapWidth = 1200;
+          const turkeyLeftPercent = 0.56; 
+          const targetScrollLeft = (mapWidth * turkeyLeftPercent) - (mapContainerRef.current.clientWidth / 2);
+          mapContainerRef.current.scrollTo({ left: targetScrollLeft, behavior: 'smooth' });
+        }
+      }, 100);
+    }
+  }, [adminTab, currentUser]);
 
   if (!currentUser) {
     return (
@@ -953,7 +969,7 @@ function GroupsTab({ theme, currentUser, setCurrentUser, users, setUsers, groups
                     </div>
                     
                     {/* خريطة العالم التفاعلية للمدير (مكبرة ومنسقة) */}
-                    <div className="w-full overflow-x-auto bg-[#F4F9F9] rounded-2xl border border-gray-200 shadow-inner p-2 relative mb-6" dir="ltr">
+                    <div ref={mapContainerRef} className="w-full overflow-x-auto bg-[#F4F9F9] rounded-2xl border border-gray-200 shadow-inner p-2 relative mb-6" dir="ltr">
                         <div className="relative w-[1200px] h-[600px] mx-auto bg-no-repeat bg-center" style={{ backgroundImage: 'url("https://upload.wikimedia.org/wikipedia/commons/e/ec/World_map_blank_without_borders.svg")', backgroundSize: 'contain' }}>
                             {getAdminStats().map(([loc, count]) => {
                                 const coords = COUNTRY_COORDS[loc];
@@ -962,17 +978,31 @@ function GroupsTab({ theme, currentUser, setCurrentUser, users, setUsers, groups
                                 return (
                                     <div key={loc} 
                                          onClick={() => setSelectedLocation(loc)}
-                                         className="absolute flex flex-col items-center group cursor-pointer hover:z-50 transition-all hover:scale-110" 
+                                         className="absolute flex flex-col items-center group cursor-pointer" 
                                          style={{ top: coords.top, left: coords.left, transform: 'translate(-50%, -100%)' }}>
-                                        <div className="bg-[#062c1e] text-[#D4AF37] text-[11px] px-2 py-1.5 rounded-lg shadow-xl whitespace-nowrap mb-1 z-10 font-bold border border-[#D4AF37]/50 text-center leading-tight opacity-90 group-hover:opacity-100 transition-opacity" dir="rtl">
+                                        
+                                        {/* المربع المخفي الذي يظهر عند التمرير (Tooltip) */}
+                                        <div className={`absolute bottom-full mb-2 bg-[#062c1e] text-[#D4AF37] text-[11px] px-3 py-2 rounded-xl shadow-2xl whitespace-nowrap z-50 font-bold border border-[#D4AF37]/50 text-center leading-tight transition-all duration-300 origin-bottom ${selectedLocation === loc ? 'opacity-100 scale-100' : 'opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100'}`} dir="rtl">
                                             {loc} <span className="text-white">({count})</span> <br/> <span className="text-[#E8CA6D]">{percentage}%</span>
+                                            {/* سهم المربع المتجه للأسفل */}
+                                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-[#062c1e]"></div>
                                         </div>
-                                        <MapPin size={24} className="text-[#D4AF37] fill-[#062c1e] drop-shadow-md group-hover:text-[#E8CA6D] transition-colors" />
+
+                                        {/* الدبوس */}
+                                        <div className={`relative transition-all duration-300 ${selectedLocation === loc ? 'scale-125 z-40' : 'z-10 group-hover:scale-110 group-hover:z-30'}`}>
+                                            <MapPin size={selectedLocation === loc ? 32 : 24} className={`drop-shadow-md transition-colors ${selectedLocation === loc ? 'text-[#E8CA6D] fill-[#062c1e]' : 'text-[#D4AF37] fill-[#062c1e]/80'}`} />
+                                            {/* وميض عند دبوس تركيا أو الدبوس المحدد */}
+                                            {(selectedLocation === loc || loc === 'تركيا') && (
+                                                <span className="absolute top-0 right-0 flex h-full w-full justify-center items-center -z-10">
+                                                    <span className="animate-ping absolute inline-flex h-6 w-6 rounded-full bg-[#E8CA6D] opacity-75"></span>
+                                                </span>
+                                            )}
+                                        </div>
                                     </div>
                                 )
                             })}
                         </div>
-                        <p className="text-center text-[10px] text-gray-400 mt-2 font-bold" dir="rtl">يمكنك التمرير يميناً ويساراً لرؤية كامل الخريطة. <span className="text-[#062c1e]">اضغط على أي دولة لرؤية مشتركيها.</span></p>
+                        <p className="text-center text-[10px] text-gray-400 mt-2 font-bold" dir="rtl">يمكنك التمرير يميناً ويساراً لرؤية كامل الخريطة. <span className="text-[#062c1e]">اضغط على أي دبوس لرؤية التفاصيل.</span></p>
                     </div>
 
                     {/* قائمة المشتركين عند الضغط على الدولة */}
