@@ -77,16 +77,16 @@ const LOCATIONS_LIST = [
   'تركيا', 'ألمانيا', 'السويد', 'إيطاليا', 'إنكلترا', 'الدنمارك', 'أخرى'
 ];
 
-// إحداثيات تقريبية للدول على خريطة العالم (X: left, Y: top)
+// إحداثيات معدلة ومتباعدة لمنع التداخل على خريطة أبعادها 1200x600 (X: left, Y: top)
 const COUNTRY_COORDS = {
-  'سوريا': { left: '56.5%', top: '36.5%' },
-  'السعودية': { left: '58.5%', top: '43%' },
-  'الإمارات': { left: '61%', top: '42%' },
-  'مصر': { left: '55%', top: '41%' },
-  'الأردن': { left: '56.5%', top: '38%' },
-  'فلسطين': { left: '56.2%', top: '38.2%' },
-  'لبنان': { left: '56.3%', top: '37%' },
-  'العراق': { left: '58.5%', top: '37%' },
+  'سوريا': { left: '57%', top: '35%' },
+  'السعودية': { left: '59%', top: '44%' },
+  'الإمارات': { left: '62.5%', top: '42%' },
+  'مصر': { left: '54%', top: '42%' },
+  'الأردن': { left: '57%', top: '39%' },
+  'فلسطين': { left: '55%', top: '38.5%' },
+  'لبنان': { left: '55.5%', top: '36.5%' },
+  'العراق': { left: '59.5%', top: '36%' },
   'المغرب': { left: '46%', top: '38%' },
   'الجزائر': { left: '48.5%', top: '39%' },
   'تونس': { left: '51%', top: '36%' },
@@ -94,9 +94,9 @@ const COUNTRY_COORDS = {
   'السودان': { left: '56%', top: '49%' },
   'اليمن': { left: '59%', top: '49%' },
   'سلطنة عمان': { left: '62%', top: '45%' },
-  'قطر': { left: '60.5%', top: '43.5%' },
-  'البحرين': { left: '60%', top: '43%' },
-  'الكويت': { left: '59.5%', top: '41%' },
+  'قطر': { left: '61.5%', top: '43.5%' },
+  'البحرين': { left: '60.5%', top: '42.5%' },
+  'الكويت': { left: '60%', top: '40.5%' },
   'موريتانيا': { left: '44%', top: '46%' },
   'الصومال': { left: '60%', top: '53%' },
   'جيبوتي': { left: '59%', top: '51%' },
@@ -116,7 +116,9 @@ const MOCK_USERS = [
   { id: 'u_test2', email: 't2@quran.com', name: 'علي الدمشقي', password: '123', role: 'USER', location: 'تركيا' },
   { id: 'u_test3', email: 't3@quran.com', name: 'حسن الإماراتي', password: '123', role: 'USER', location: 'الإمارات' },
   { id: 'u_test4', email: 't4@quran.com', name: 'يوسف العراقي', password: '123', role: 'USER', location: 'العراق' },
-  { id: 'u_test5', email: 't5@quran.com', name: 'سامي السويد', password: '123', role: 'USER', location: 'السويد' }
+  { id: 'u_test5', email: 't5@quran.com', name: 'سامي السويد', password: '123', role: 'USER', location: 'السويد' },
+  { id: 'u_test6', email: 't6@quran.com', name: 'ماجد الأردني', password: '123', role: 'USER', location: 'الأردن' },
+  { id: 'u_test7', email: 't7@quran.com', name: 'خالد الكويتي', password: '123', role: 'USER', location: 'الكويت' }
 ];
 
 const initKhatmaJuzs = () => Array.from({length: 30}, (_, i) => ({
@@ -650,6 +652,7 @@ function GroupsTab({ theme, currentUser, setCurrentUser, users, setUsers, groups
   const [groupTab, setGroupTab] = useState('khatma'); 
   const [authMode, setAuthMode] = useState('login'); // 'login' or 'register'
   const [adminTab, setAdminTab] = useState('groups'); // 'groups' or 'stats'
+  const [selectedLocation, setSelectedLocation] = useState(null); // لعرض مستخدمي دولة معينة
   
   // Login fields
   const [emailInput, setEmailInput] = useState("");
@@ -949,32 +952,61 @@ function GroupsTab({ theme, currentUser, setCurrentUser, users, setUsers, groups
                         <span className="text-xs bg-[#062c1e]/10 text-[#062c1e] px-3 py-1.5 rounded-full font-bold">إجمالي: {users.length}</span>
                     </div>
                     
-                    {/* خريطة العالم التفاعلية للمدير */}
+                    {/* خريطة العالم التفاعلية للمدير (مكبرة ومنسقة) */}
                     <div className="w-full overflow-x-auto bg-[#F4F9F9] rounded-2xl border border-gray-200 shadow-inner p-2 relative mb-6" dir="ltr">
-                        <div className="relative w-[800px] h-[400px] mx-auto bg-no-repeat bg-center" style={{ backgroundImage: 'url("https://upload.wikimedia.org/wikipedia/commons/e/ec/World_map_blank_without_borders.svg")', backgroundSize: 'contain' }}>
+                        <div className="relative w-[1200px] h-[600px] mx-auto bg-no-repeat bg-center" style={{ backgroundImage: 'url("https://upload.wikimedia.org/wikipedia/commons/e/ec/World_map_blank_without_borders.svg")', backgroundSize: 'contain' }}>
                             {getAdminStats().map(([loc, count]) => {
                                 const coords = COUNTRY_COORDS[loc];
-                                if (!coords) return null; // لا تظهر الدول التي ليس لها إحداثيات صريحة على الخريطة
+                                if (!coords) return null; // لا تظهر الدول التي ليس لها إحداثيات صريحة
                                 const percentage = Math.round((count / users.length) * 100);
                                 return (
-                                    <div key={loc} className="absolute flex flex-col items-center group" style={{ top: coords.top, left: coords.left, transform: 'translate(-50%, -100%)' }}>
-                                        <div className="bg-[#062c1e] text-[#D4AF37] text-[10px] px-2 py-1 rounded-lg shadow-xl whitespace-nowrap mb-1 z-10 font-bold border border-[#D4AF37]/30 text-center leading-tight" dir="rtl">
-                                            {loc} ({count}) <br/> {percentage}%
+                                    <div key={loc} 
+                                         onClick={() => setSelectedLocation(loc)}
+                                         className="absolute flex flex-col items-center group cursor-pointer hover:z-50 transition-all hover:scale-110" 
+                                         style={{ top: coords.top, left: coords.left, transform: 'translate(-50%, -100%)' }}>
+                                        <div className="bg-[#062c1e] text-[#D4AF37] text-[11px] px-2 py-1.5 rounded-lg shadow-xl whitespace-nowrap mb-1 z-10 font-bold border border-[#D4AF37]/50 text-center leading-tight opacity-90 group-hover:opacity-100 transition-opacity" dir="rtl">
+                                            {loc} <span className="text-white">({count})</span> <br/> <span className="text-[#E8CA6D]">{percentage}%</span>
                                         </div>
-                                        <MapPin size={20} className="text-[#D4AF37] fill-[#062c1e] drop-shadow-md animate-bounce" />
+                                        <MapPin size={24} className="text-[#D4AF37] fill-[#062c1e] drop-shadow-md group-hover:text-[#E8CA6D] transition-colors" />
                                     </div>
                                 )
                             })}
                         </div>
-                        <p className="text-center text-[10px] text-gray-400 mt-2 font-bold" dir="rtl">يمكنك التمرير يميناً ويساراً لرؤية كامل الخريطة</p>
+                        <p className="text-center text-[10px] text-gray-400 mt-2 font-bold" dir="rtl">يمكنك التمرير يميناً ويساراً لرؤية كامل الخريطة. <span className="text-[#062c1e]">اضغط على أي دولة لرؤية مشتركيها.</span></p>
                     </div>
+
+                    {/* قائمة المشتركين عند الضغط على الدولة */}
+                    {selectedLocation && (
+                        <div className="bg-[#FCFBF7] border-2 border-[#D4AF37]/50 p-4 rounded-xl mb-6 animate-in slide-in-from-bottom-2">
+                            <div className="flex justify-between items-center mb-3 pb-2 border-b border-[#D4AF37]/30">
+                                <h3 className="font-bold text-[#062c1e] text-lg">مشتركو {selectedLocation}</h3>
+                                <button onClick={() => setSelectedLocation(null)} className="bg-gray-200 p-1 rounded-full text-gray-600 hover:bg-red-100 hover:text-red-600 transition-colors"><X size={16} /></button>
+                            </div>
+                            <div className="max-h-48 overflow-y-auto space-y-2 pr-2">
+                                {users.filter(u => u.location === selectedLocation).map((user, idx) => (
+                                    <div key={idx} className="flex justify-between items-center bg-white p-3 rounded-lg border border-gray-100 shadow-sm">
+                                        <div className="flex items-center gap-2">
+                                            <div className="bg-[#062c1e]/10 p-2 rounded-full"><UserIcon size={16} className="text-[#062c1e]" /></div>
+                                            <div>
+                                                <p className="font-bold text-sm text-[#062c1e]">{user.name}</p>
+                                                <p className="text-[10px] text-gray-500">{user.email}</p>
+                                            </div>
+                                        </div>
+                                        <span className="text-[10px] bg-[#D4AF37]/20 text-[#062c1e] px-2 py-1 rounded font-bold">
+                                            {user.role === 'ADMIN' ? 'مدير' : user.role === 'SUPERVISOR' ? 'مشرف' : 'عضو'}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
 
                     {/* قائمة تفصيلية أسفل الخريطة */}
                     <div className="flex flex-wrap gap-2">
                         {getAdminStats().map(([loc, count]) => {
                             const percentage = Math.round((count / users.length) * 100);
                             return (
-                                <span key={loc} className="text-xs font-bold px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-gray-700">
+                                <span key={loc} onClick={() => setSelectedLocation(loc)} className={`text-xs font-bold px-3 py-1.5 border rounded-lg cursor-pointer transition-colors ${selectedLocation === loc ? 'bg-[#062c1e] text-white border-[#062c1e]' : 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100'}`}>
                                     {loc}: {percentage}% ({count})
                                 </span>
                             )
