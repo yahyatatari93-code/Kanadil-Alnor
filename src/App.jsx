@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Home, List, Library, Bookmark, Users, ArrowRight, Copy, BookmarkMinus, PlusCircle, Trash2, LogOut, Loader2, Check, BookOpenText, ChevronLeft, ChevronRight, Search, ShieldAlert, Flag, Send, Reply, X, User as UserIcon, BookOpen, Trophy, PlayCircle, PauseCircle, StopCircle, MapPin, BarChart3 } from 'lucide-react';
+import { Home, List, Library, Bookmark, Users, ArrowRight, Copy, BookmarkMinus, PlusCircle, Trash2, LogOut, Loader2, Check, BookOpenText, ChevronLeft, ChevronRight, Search, ShieldAlert, Flag, Send, Reply, X, User as UserIcon, BookOpen, Trophy, PlayCircle, PauseCircle, StopCircle, MapPin, BarChart3, Globe2 } from 'lucide-react';
 
 // --- البيانات الأساسية والميتا ---
 const SURAHS_META = [
@@ -69,13 +69,54 @@ const TAFSIR_BOOKS = [
   { id: "qurtubi", title: "الجامع لأحكام القرآن", author: "الإمام شمس الدين القرطبي" }
 ];
 
+// --- قائمة الدول الموسعة ---
+const LOCATIONS_LIST = [
+  'سوريا', 'السعودية', 'الإمارات', 'مصر', 'الأردن', 'فلسطين', 'لبنان', 'العراق', 
+  'المغرب', 'الجزائر', 'تونس', 'ليبيا', 'السودان', 'اليمن', 'سلطنة عمان', 'قطر', 
+  'البحرين', 'الكويت', 'موريتانيا', 'الصومال', 'جيبوتي', 
+  'تركيا', 'ألمانيا', 'السويد', 'إيطاليا', 'إنكلترا', 'الدنمارك', 'أخرى'
+];
+
+// إحداثيات تقريبية للدول على خريطة العالم (X: left, Y: top)
+const COUNTRY_COORDS = {
+  'سوريا': { left: '56.5%', top: '36.5%' },
+  'السعودية': { left: '58.5%', top: '43%' },
+  'الإمارات': { left: '61%', top: '42%' },
+  'مصر': { left: '55%', top: '41%' },
+  'الأردن': { left: '56.5%', top: '38%' },
+  'فلسطين': { left: '56.2%', top: '38.2%' },
+  'لبنان': { left: '56.3%', top: '37%' },
+  'العراق': { left: '58.5%', top: '37%' },
+  'المغرب': { left: '46%', top: '38%' },
+  'الجزائر': { left: '48.5%', top: '39%' },
+  'تونس': { left: '51%', top: '36%' },
+  'ليبيا': { left: '52.5%', top: '40%' },
+  'السودان': { left: '56%', top: '49%' },
+  'اليمن': { left: '59%', top: '49%' },
+  'سلطنة عمان': { left: '62%', top: '45%' },
+  'قطر': { left: '60.5%', top: '43.5%' },
+  'البحرين': { left: '60%', top: '43%' },
+  'الكويت': { left: '59.5%', top: '41%' },
+  'موريتانيا': { left: '44%', top: '46%' },
+  'الصومال': { left: '60%', top: '53%' },
+  'جيبوتي': { left: '59%', top: '51%' },
+  'تركيا': { left: '56%', top: '33%' },
+  'ألمانيا': { left: '51.5%', top: '27%' },
+  'السويد': { left: '53%', top: '19%' },
+  'إيطاليا': { left: '52.5%', top: '32%' },
+  'إنكلترا': { left: '48.5%', top: '27%' },
+  'الدنمارك': { left: '51.5%', top: '23%' }
+};
+
 const MOCK_USERS = [
   { id: 'u_admin', email: 'admin@quran.com', name: 'مدير النظام', password: '123', role: 'ADMIN', location: 'سوريا' },
   { id: 'u_super', email: 'super@quran.com', name: 'أحمد المشرف', password: '123', role: 'SUPERVISOR', location: 'السعودية' },
   { id: 'u_user', email: 'user@quran.com', name: 'مستخدم تجريبي', password: '123', role: 'USER', location: 'مصر' },
-  { id: 'u_test1', email: 't1@quran.com', name: 'عمر المسلم', password: '123', role: 'USER', location: 'سوريا' },
-  { id: 'u_test2', email: 't2@quran.com', name: 'علي الدمشقي', password: '123', role: 'USER', location: 'سوريا' },
-  { id: 'u_test3', email: 't3@quran.com', name: 'حسن الإماراتي', password: '123', role: 'USER', location: 'الإمارات' }
+  { id: 'u_test1', email: 't1@quran.com', name: 'عمر المسلم', password: '123', role: 'USER', location: 'ألمانيا' },
+  { id: 'u_test2', email: 't2@quran.com', name: 'علي الدمشقي', password: '123', role: 'USER', location: 'تركيا' },
+  { id: 'u_test3', email: 't3@quran.com', name: 'حسن الإماراتي', password: '123', role: 'USER', location: 'الإمارات' },
+  { id: 'u_test4', email: 't4@quran.com', name: 'يوسف العراقي', password: '123', role: 'USER', location: 'العراق' },
+  { id: 'u_test5', email: 't5@quran.com', name: 'سامي السويد', password: '123', role: 'USER', location: 'السويد' }
 ];
 
 const initKhatmaJuzs = () => Array.from({length: 30}, (_, i) => ({
@@ -604,8 +645,6 @@ function ReadingScreen({ readingItem, theme, onBack, bookmarks, toggleBookmark, 
   );
 }
 
-const LOCATIONS_LIST = ['سوريا', 'السعودية', 'مصر', 'الإمارات', 'الأردن', 'المغرب', 'الجزائر', 'فلسطين', 'أخرى'];
-
 function GroupsTab({ theme, currentUser, setCurrentUser, users, setUsers, groups, setGroups, showToast }) {
   const [activeGroupId, setActiveGroupId] = useState(null);
   const [groupTab, setGroupTab] = useState('khatma'); 
@@ -878,7 +917,6 @@ function GroupsTab({ theme, currentUser, setCurrentUser, users, setUsers, groups
   const otherGroups = groups.filter(g => !g.members.some(m => m.userId === currentUser.id) && currentUser.role !== 'ADMIN');
   const isManagement = currentUser.role === 'ADMIN' || currentUser.role === 'SUPERVISOR';
   
-  // دالة لحساب وتجهيز الإحصائيات للإدارة
   const getAdminStats = () => {
       const stats = users.reduce((acc, u) => {
           acc[u.location] = (acc[u.location] || 0) + 1;
@@ -896,11 +934,10 @@ function GroupsTab({ theme, currentUser, setCurrentUser, users, setUsers, groups
       </div>
       
       <div className="p-5">
-        {/* شريط تبديل للمدير فقط */}
         {currentUser.role === 'ADMIN' && (
            <div className="flex bg-gray-100 rounded-xl p-1 mb-6 shadow-inner border border-gray-200">
                <button onClick={() => setAdminTab('groups')} className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all flex items-center justify-center gap-2 ${adminTab === 'groups' ? 'bg-white shadow text-[#062c1e]' : 'text-gray-500'}`}><Users size={16}/> المجموعات</button>
-               <button onClick={() => setAdminTab('stats')} className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all flex items-center justify-center gap-2 ${adminTab === 'stats' ? 'bg-[#062c1e] text-[#D4AF37] shadow-md' : 'text-gray-500'}`}><BarChart3 size={16}/> الإحصائيات</button>
+               <button onClick={() => setAdminTab('stats')} className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all flex items-center justify-center gap-2 ${adminTab === 'stats' ? 'bg-[#062c1e] text-[#D4AF37] shadow-md' : 'text-gray-500'}`}><Globe2 size={16}/> الإحصائيات</button>
            </div>
         )}
 
@@ -908,25 +945,38 @@ function GroupsTab({ theme, currentUser, setCurrentUser, users, setUsers, groups
             <div className="animate-in fade-in slide-in-from-right-4">
                 <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
                     <div className="flex items-center justify-between mb-6 pb-4 border-b">
-                        <h2 className="font-bold text-lg text-[#062c1e] flex items-center gap-2"><MapPin size={20} className="text-[#D4AF37]"/> توزع المستخدمين جغرافياً</h2>
+                        <h2 className="font-bold text-lg text-[#062c1e] flex items-center gap-2"><MapPin size={20} className="text-[#D4AF37]"/> توزع المشتركين</h2>
                         <span className="text-xs bg-[#062c1e]/10 text-[#062c1e] px-3 py-1.5 rounded-full font-bold">إجمالي: {users.length}</span>
                     </div>
                     
-                    <div className="space-y-5">
-                        {getAdminStats().map(([loc, count], index) => {
+                    {/* خريطة العالم التفاعلية للمدير */}
+                    <div className="w-full overflow-x-auto bg-[#F4F9F9] rounded-2xl border border-gray-200 shadow-inner p-2 relative mb-6" dir="ltr">
+                        <div className="relative w-[800px] h-[400px] mx-auto bg-no-repeat bg-center" style={{ backgroundImage: 'url("https://upload.wikimedia.org/wikipedia/commons/e/ec/World_map_blank_without_borders.svg")', backgroundSize: 'contain' }}>
+                            {getAdminStats().map(([loc, count]) => {
+                                const coords = COUNTRY_COORDS[loc];
+                                if (!coords) return null; // لا تظهر الدول التي ليس لها إحداثيات صريحة على الخريطة
+                                const percentage = Math.round((count / users.length) * 100);
+                                return (
+                                    <div key={loc} className="absolute flex flex-col items-center group" style={{ top: coords.top, left: coords.left, transform: 'translate(-50%, -100%)' }}>
+                                        <div className="bg-[#062c1e] text-[#D4AF37] text-[10px] px-2 py-1 rounded-lg shadow-xl whitespace-nowrap mb-1 z-10 font-bold border border-[#D4AF37]/30 text-center leading-tight" dir="rtl">
+                                            {loc} ({count}) <br/> {percentage}%
+                                        </div>
+                                        <MapPin size={20} className="text-[#D4AF37] fill-[#062c1e] drop-shadow-md animate-bounce" />
+                                    </div>
+                                )
+                            })}
+                        </div>
+                        <p className="text-center text-[10px] text-gray-400 mt-2 font-bold" dir="rtl">يمكنك التمرير يميناً ويساراً لرؤية كامل الخريطة</p>
+                    </div>
+
+                    {/* قائمة تفصيلية أسفل الخريطة */}
+                    <div className="flex flex-wrap gap-2">
+                        {getAdminStats().map(([loc, count]) => {
                             const percentage = Math.round((count / users.length) * 100);
                             return (
-                                <div key={loc} className="relative">
-                                    <div className="flex justify-between mb-2 text-sm font-bold">
-                                        <span className="text-gray-700">{loc}</span>
-                                        <span className="text-[#062c1e]">{percentage}% <span className="text-xs text-gray-400">({count})</span></span>
-                                    </div>
-                                    <div className="w-full bg-gray-100 rounded-full h-3">
-                                        <div className="bg-[#D4AF37] h-3 rounded-full transition-all duration-1000 ease-out relative overflow-hidden" style={{ width: `${percentage}%` }}>
-                                            <div className="absolute inset-0 bg-white/20 w-full animate-[shimmer_2s_infinite]"></div>
-                                        </div>
-                                    </div>
-                                </div>
+                                <span key={loc} className="text-xs font-bold px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-gray-700">
+                                    {loc}: {percentage}% ({count})
+                                </span>
                             )
                         })}
                     </div>
@@ -994,13 +1044,6 @@ function GroupsTab({ theme, currentUser, setCurrentUser, users, setUsers, groups
               </div>
           </div>
       )}
-      
-      {/* CSS Animation للرسم البياني */}
-      <style dangerouslySetInnerHTML={{__html: `
-        @keyframes shimmer {
-          100% { transform: translateX(100%); }
-        }
-      `}} />
     </div>
   );
 }
